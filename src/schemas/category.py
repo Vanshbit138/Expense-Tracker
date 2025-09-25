@@ -5,13 +5,13 @@ Category schemas for request/response validation.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CategoryBase(BaseModel):
     """Base category schema."""
 
-    name: str
+    name: str = Field(..., min_length=1, description="Category name cannot be empty")
     description: Optional[str] = None
     color: Optional[str] = None
 
@@ -25,7 +25,7 @@ class CategoryCreate(CategoryBase):
 class CategoryUpdate(BaseModel):
     """Category update schema."""
 
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1, description="Category name cannot be empty")
     description: Optional[str] = None
     color: Optional[str] = None
 
@@ -43,14 +43,19 @@ class CategoryInDB(CategoryBase):
         from_attributes = True
 
 
-class Category(CategoryBase):
+class Category(CategoryInDB):
     """Category response schema."""
 
-    id: int
-    is_system: bool
-    user_id: Optional[int]
-    created_at: datetime
-    updated_at: datetime
+    pass
+
+
+class CategoryList(BaseModel):
+    """Category list response schema."""
+
+    categories: list[Category]
+    total: int
+    page: int
+    per_page: int
 
     class Config:
         from_attributes = True

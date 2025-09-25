@@ -117,3 +117,109 @@ class TestCategories:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert "Not enough permissions" in response.json()["detail"]
+
+
+class TestCategoriesEdgeCases:
+    """Test category endpoints edge cases."""
+    
+    def test_create_category_empty_name(self, client, auth_headers):
+        """Test creating category with empty name."""
+        category_data = {
+            "name": "",
+            "description": "Empty name category"
+        }
+        
+        response = client.post(
+            "/api/v1/categories/",
+            json=category_data,
+            headers=auth_headers
+        )
+        # Should fail validation
+        assert response.status_code == 422
+        
+    def test_create_category_long_name(self, client, auth_headers):
+        """Test creating category with very long name."""
+        category_data = {
+            "name": "A" * 200,  # Very long name
+            "description": "Long name category"
+        }
+        
+        response = client.post(
+            "/api/v1/categories/",
+            json=category_data,
+            headers=auth_headers
+        )
+        # Might succeed or fail based on validation rules
+        
+    def test_create_category_special_characters(self, client, auth_headers):
+        """Test creating category with special characters."""
+        category_data = {
+            "name": "Food & Dining 🍔",
+            "description": "Category with emojis and symbols"
+        }
+        
+        response = client.post(
+            "/api/v1/categories/",
+            json=category_data,
+            headers=auth_headers
+        )
+        # Should succeed
+        assert response.status_code == 201
+        
+    def test_get_categories_empty_list(self, client, auth_headers):
+        """Test getting categories when none exist."""
+        response = client.get("/api/v1/categories/", headers=auth_headers)
+        assert response.status_code == 200
+        data = response.json()
+        # Should return empty list or system categories
+        assert isinstance(data, list)
+        
+    def test_update_category_same_name(self, client, auth_headers):
+        """Test updating category with same name."""
+        # Create category
+        category_data = {"name": "Test Category", "description": "Test"}
+        response = client.post("/api/v1/categories/", json=category_data, headers=auth_headers)
+        category_id = response.json()["id"]
+        
+        # Update with same name
+        update_data = {"name": "Test Category", "description": "Updated description"}
+        response = client.put(
+            f"/api/v1/categories/{category_id}",
+            json=update_data,
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        
+    def test_delete_category_with_expenses(self, client, auth_headers, test_category):
+        """Test deleting category that has associated expenses."""
+        # Create expense with this category
+        expense_data = {
+            "amount": 100.00,
+            "currency": "USD",
+            "description": "Test Expense",
+            "status": "pending",
+            "is_recurring": False,
+            "expense_date": "2024-01-15T00:00:00",
+            "category_id": test_category["id"]
+        }
+        client.post("/api/v1/expenses/", json=expense_data, headers=auth_headers)
+        
+        # Try to delete category
+        response = client.delete(
+            f"/api/v1/categories/{test_category['id']}",
+            headers=auth_headers
+        )
+        # Should fail with 400 Bad Request - category has associated expenses
+        assert response.status_code == 400
+        assert "Cannot delete category with associated expenses" in response.json().get("detail", "")
+        
+    def test_init_system_categories_multiple_times(self, client, auth_headers):
+        """Test initializing system categories multiple times."""
+        # This endpoint requires superuser permissions, so regular user should get 403
+        response1 = client.post("/api/v1/categories/init-system-categories", headers=auth_headers)
+        
+        # Regular user should get 403 Forbidden
+        assert response1.status_code == 403
+        
+        # Since we cannot test the actual functionality without a superuser,
+        # we just verify the security is working

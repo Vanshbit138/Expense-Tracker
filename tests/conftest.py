@@ -102,7 +102,7 @@ def test_category_data():
 
 
 @pytest.fixture
-def test_expense_data():
+def test_expense_data(test_category):
     """Test expense data."""
     return {
         "amount": 100.50,
@@ -111,5 +111,13 @@ def test_expense_data():
         "status": "pending",
         "is_recurring": False,
         "expense_date": "2024-01-01T00:00:00",
-        "category_id": 1,
+        "category_id": test_category["id"],
     }
+
+
+@pytest.fixture
+def test_category(client, auth_headers, test_category_data):
+    """Create a test category."""
+    response = client.post("/api/v1/categories/", json=test_category_data, headers=auth_headers)
+    assert response.status_code == 201
+    return response.json()

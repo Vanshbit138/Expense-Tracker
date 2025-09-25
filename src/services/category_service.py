@@ -105,6 +105,13 @@ class CategoryService:
                 detail="System categories cannot be deleted",
             )
 
+        # Check if category has associated expenses
+        if category.expenses:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot delete category with associated expenses",
+            )
+
         return self.category_repo.delete(category_id)
 
     def create_system_categories(self) -> List[Category]:
@@ -159,8 +166,12 @@ class CategoryService:
 
         created_categories = []
         for cat_data in system_categories:
-            # Check if category already exists
-            existing = self.category_repo.get_by_name(cat_data["name"])
+            # Check if category already exists (look only for system categories)
+            existing = (
+                self.db.query(Category)
+                .filter(Category.name == cat_data["name"], Category.is_system == True)
+                .first()
+            )
             if not existing:
                 category = Category(
                     name=cat_data["name"],
