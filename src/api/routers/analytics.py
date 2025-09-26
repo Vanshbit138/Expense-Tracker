@@ -10,7 +10,12 @@ from sqlalchemy.orm import Session
 from src.core.database import get_db
 from src.core.dependencies import get_current_active_user
 from src.models.user import User
-from src.services.expense_service import ExpenseService
+from src.schemas.expense import (
+    CategoryStatsQuery,
+    ExpenseStatsQuery,
+    MonthlyAnalyticsQuery,
+)
+from src.services.expense.expense_service import ExpenseService
 
 router = APIRouter()
 
@@ -25,9 +30,16 @@ def get_expense_stats(
 ):
     """Get expense statistics for a user."""
     expense_service = ExpenseService(db)
-    return expense_service.get_expense_stats(
-        current_user.id, start_date, end_date, currency
+
+    # Use Pydantic model for parameter validation
+    stats_query = ExpenseStatsQuery(
+        user_id=current_user.id,
+        start_date=start_date,
+        end_date=end_date,
+        currency=currency,
     )
+
+    return expense_service.get_expense_stats(stats_query)
 
 
 @router.get("/category-stats")
@@ -42,9 +54,13 @@ def get_category_stats(
 ):
     """Get expense statistics by category."""
     expense_service = ExpenseService(db)
-    return expense_service.get_category_stats(
-        current_user.id, start_date, end_date, limit
+
+    # Use Pydantic model for parameter validation
+    stats_query = CategoryStatsQuery(
+        user_id=current_user.id, start_date=start_date, end_date=end_date, limit=limit
     )
+
+    return expense_service.get_category_stats(stats_query)
 
 
 @router.get("/monthly/{year}/{month}")
@@ -59,4 +75,10 @@ def get_monthly_analytics(
         raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
 
     expense_service = ExpenseService(db)
-    return expense_service.get_monthly_analytics(current_user.id, year, month)
+
+    # Use Pydantic model for parameter validation
+    analytics_query = MonthlyAnalyticsQuery(
+        user_id=current_user.id, year=year, month=month
+    )
+
+    return expense_service.get_monthly_analytics(analytics_query)

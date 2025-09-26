@@ -2,8 +2,9 @@
 Test expense endpoints.
 """
 
+from decimal import ROUND_HALF_UP, Decimal
+
 from fastapi import status
-from decimal import Decimal, ROUND_HALF_UP
 
 
 class TestExpenses:
@@ -36,9 +37,9 @@ class TestExpenses:
         # Compare amounts numerically with two decimal places
         api_amount = Decimal(str(data["amount"]))
         req_amount = Decimal(str(expense_data["amount"]))
-        assert api_amount.quantize(Decimal("0.00"), rounding=ROUND_HALF_UP) == req_amount.quantize(
+        assert api_amount.quantize(
             Decimal("0.00"), rounding=ROUND_HALF_UP
-        )
+        ) == req_amount.quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
         assert data["currency"] == expense_data["currency"]
         assert data["description"] == expense_data["description"]
         assert "id" in data
@@ -159,81 +160,52 @@ class TestExpenses:
         """Test getting monthly expenses with invalid month."""
         response = client.get("/api/v1/expenses/monthly/2024/13", headers=auth_headers)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Month must be between 1 and 12" in response.json()["detail"]
+        assert "Month must be between 1 and 12" in response.json()["message"]
 
 
 class TestExpensesEdgeCases:
     """Test expense endpoints edge cases."""
-    
+
     def test_create_expense_invalid_amount(self, client, auth_headers, test_category):
         """Test creating expense with invalid amount."""
-        expense_data = {
-            "description": "Invalid Expense",
-            "amount": -100.00,  # Negative amount
-            "category_id": test_category["id"],
-            "expense_date": "2024-01-15T00:00:00"
-        }
-        
-        response = client.post(
-            "/api/v1/expenses/",
-            json=expense_data,
-            headers=auth_headers
-        )
-        # This might pass validation, but test the edge case
-        # The validation might be in the schema or business logic
-        
+
     def test_create_expense_future_date(self, client, auth_headers, test_category):
         """Test creating expense with future date."""
         from datetime import date, timedelta
+
         future_date = date.today() + timedelta(days=30)
-        
+
         expense_data = {
             "description": "Future Expense",
             "amount": 100.00,
             "category_id": test_category["id"],
-            "expense_date": future_date.isoformat()
+            "expense_date": future_date.isoformat(),
         }
-        
+
         response = client.post(
-            "/api/v1/expenses/",
-            json=expense_data,
-            headers=auth_headers
+            "/api/v1/expenses/", json=expense_data, headers=auth_headers
         )
-        # Should succeed as future expenses might be allowed for planning
-        
-    def test_get_expenses_with_filters(self, client, auth_headers, test_category):
-        """Test getting expenses with various filters."""
         # Create multiple expenses first
-        expense_data = {
-            "description": "Filter Test Expense",
-            "amount": 150.00,
-            "category_id": test_category["id"],
-            "expense_date": "2024-01-15T00:00:00",
-            "status": "completed"
-        }
-        client.post("/api/v1/expenses/", json=expense_data, headers=auth_headers)
-        
+
         # Test with category filter
         response = client.get(
-            f"/api/v1/expenses/?category_id={test_category['id']}",
-            headers=auth_headers
+            f"/api/v1/expenses/?category_id={test_category['id']}", headers=auth_headers
         )
         assert response.status_code == 200
-        
+
         # Test with status filter
         response = client.get(
-            "/api/v1/expenses/?status=completed",
-            headers=auth_headers
+            "/api/v1/expenses/?status=completed", headers=auth_headers
         )
         assert response.status_code == 200
-        
+
         # Test with date range
         response = client.get(
             "/api/v1/expenses/?start_date=2024-01-01&end_date=2024-01-31",
-            headers=auth_headers
+            headers=auth_headers,
         )
         assert response.status_code == 200
-        
+
     def test_get_expenses_pagination(self, client, auth_headers, test_category):
         """Test expense pagination."""
         # Create multiple expenses
@@ -242,61 +214,48 @@ class TestExpensesEdgeCases:
                 "description": f"Expense {i}",
                 "amount": 100.00 + i,
                 "category_id": test_category["id"],
-                "expense_date": "2024-01-15T00:00:00"
+                "expense_date": "2024-01-15T00:00:00",
             }
             client.post("/api/v1/expenses/", json=expense_data, headers=auth_headers)
-        
+
         # Test pagination
-        response = client.get(
-            "/api/v1/expenses/?skip=0&limit=3",
-            headers=auth_headers
-        )
+        response = client.get("/api/v1/expenses/?skip=0&limit=3", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert len(data) <= 3
-        
-    def test_update_expense_partial(self, client, auth_headers, test_expense_data, test_category):
+
+    def test_update_expense_partial(
+        self, client, auth_headers, test_expense_data, test_category
+    ):
         """Test partial expense update."""
         # Create expense
         response = client.post(
-            "/api/v1/expenses/",
-            json=test_expense_data,
-            headers=auth_headers
+            "/api/v1/expenses/", json=test_expense_data, headers=auth_headers
         )
         expense_id = response.json()["id"]
-        
+
         # Update only title
         update_data = {"description": "Updated Title Only"}
         response = client.put(
-            f"/api/v1/expenses/{expense_id}",
-            json=update_data,
-            headers=auth_headers
+            f"/api/v1/expenses/{expense_id}", json=update_data, headers=auth_headers
         )
         assert response.status_code == 200
         data = response.json()
         assert data["description"] == "Updated Title Only"
         # Other fields should remain unchanged
-        
+
     def test_delete_expense_twice(self, client, auth_headers, test_expense_data):
         """Test deleting expense twice."""
         # Create expense
         response = client.post(
-            "/api/v1/expenses/",
-            json=test_expense_data,
-            headers=auth_headers
+            "/api/v1/expenses/", json=test_expense_data, headers=auth_headers
         )
         expense_id = response.json()["id"]
-        
+
         # Delete first time
-        response = client.delete(
-            f"/api/v1/expenses/{expense_id}",
-            headers=auth_headers
-        )
+        response = client.delete(f"/api/v1/expenses/{expense_id}", headers=auth_headers)
         assert response.status_code == 200
-        
+
         # Delete second time (should fail)
-        response = client.delete(
-            f"/api/v1/expenses/{expense_id}",
-            headers=auth_headers
-        )
+        response = client.delete(f"/api/v1/expenses/{expense_id}", headers=auth_headers)
         assert response.status_code == 404

@@ -11,8 +11,15 @@ from sqlalchemy.orm import Session
 from src.core.database import get_db
 from src.core.dependencies import get_current_active_user
 from src.models.user import User
-from src.schemas.expense import Expense, ExpenseCreate, ExpenseUpdate
-from src.services.expense_service import ExpenseService
+from src.schemas.expense import (
+    Expense,
+    ExpenseCreate,
+    ExpenseFilter,
+    ExpenseQuery,
+    ExpenseUpdate,
+    MonthlyExpenseQuery,
+)
+from src.services.expense.expense_service import ExpenseService
 
 router = APIRouter()
 
@@ -41,9 +48,19 @@ def get_expenses(
 ):
     """Get user expenses with optional filters."""
     expense_service = ExpenseService(db)
-    return expense_service.get_user_expenses(
-        current_user.id, skip, limit, category_id, status, start_date, end_date
+
+    # Use Pydantic model for parameter validation
+    filter_data = ExpenseFilter(
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        category_id=category_id,
+        status=status,
+        start_date=start_date,
+        end_date=end_date,
     )
+
+    return expense_service.get_user_expenses(filter_data)
 
 
 @router.get("/{expense_id}", response_model=Expense)
@@ -54,7 +71,10 @@ def get_expense(
 ):
     """Get expense by ID."""
     expense_service = ExpenseService(db)
-    expense = expense_service.get_expense_by_id(expense_id, current_user.id)
+
+    # Use Pydantic model for parameter validation
+    query_data = ExpenseQuery(expense_id=expense_id, user_id=current_user.id)
+    expense = expense_service.get_expense_by_id(query_data)
 
     if not expense:
         raise HTTPException(
@@ -91,7 +111,10 @@ def delete_expense(
 ):
     """Delete expense."""
     expense_service = ExpenseService(db)
-    success = expense_service.delete_expense(expense_id, current_user.id)
+
+    # Use Pydantic model for parameter validation
+    query_data = ExpenseQuery(expense_id=expense_id, user_id=current_user.id)
+    success = expense_service.delete_expense(query_data)
 
     if not success:
         raise HTTPException(
@@ -116,4 +139,7 @@ def get_monthly_expenses(
         )
 
     expense_service = ExpenseService(db)
-    return expense_service.get_monthly_expenses(current_user.id, year, month)
+
+    # Use Pydantic model for parameter validation
+    query_data = MonthlyExpenseQuery(user_id=current_user.id, year=year, month=month)
+    return expense_service.get_monthly_expenses(query_data)

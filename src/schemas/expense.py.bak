@@ -2,7 +2,7 @@
 Expense schemas for request/response validation.
 """
 
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
@@ -78,59 +78,3 @@ class ExpenseStats(BaseModel):
     total_count: int
     average_amount: Decimal
     currency: str
-
-
-# New Query Models for Pydantic Parameter Validation
-
-
-class ExpenseQuery(BaseModel):
-    """Query parameters for expense operations."""
-
-    expense_id: int
-    user_id: int
-
-
-class ExpenseFilter(BaseModel):
-    """Filter parameters for expense queries."""
-
-    user_id: int
-    skip: int = 0
-    limit: int = 100
-    category_id: Optional[int] = None
-    status: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-
-
-class MonthlyExpenseQuery(BaseModel):
-    """Query for monthly expenses."""
-
-    user_id: int
-    year: int
-    month: int
-
-
-class ExpenseStatsQuery(BaseModel):
-    """Query for expense statistics."""
-
-    user_id: int
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    currency: str = "USD"
-
-
-class CategoryStatsQuery(BaseModel):
-    """Query for category statistics."""
-
-    user_id: int
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    limit: int = 10
-
-
-class MonthlyAnalyticsQuery(BaseModel):
-    """Query for monthly analytics."""
-
-    user_id: int
-    year: int
-    month: int

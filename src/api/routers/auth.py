@@ -18,7 +18,8 @@ from src.schemas.auth import (
     UserRegister,
     UserResponse,
 )
-from src.services.user_service import UserService
+from src.schemas.user_queries import AuthenticationQuery, PasswordChangeQuery
+from src.services.user.user_service import UserService
 
 router = APIRouter()
 
@@ -37,9 +38,12 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Login user and return access token."""
     user_service = UserService(db)
-    user = user_service.authenticate_user(
-        user_credentials.email, user_credentials.password
+
+    # Use Pydantic model for parameter validation
+    auth_query = AuthenticationQuery(
+        email=user_credentials.email, password=user_credentials.password
     )
+    user = user_service.authenticate_user(auth_query)
 
     if not user:
         raise HTTPException(
@@ -59,6 +63,26 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/change-password")
+def change_password(
+    password_data: PasswordChange,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Change user password."""
+    user_service = UserService(db)
+
+    # Use Pydantic model for parameter validation
+    password_query = PasswordChangeQuery(
+        user_id=current_user.id,
+        current_password=password_data.current_password,
+        new_password=password_data.new_password,
+    )
+    user_service.change_password(password_query)
+
+    return {"message": "Password changed successfully"}
 
 
 @router.get("/me", response_model=UserResponse)
@@ -83,23 +107,3 @@ def update_current_user_profile(
         )
 
     return updated_user
-
-
-@router.post("/change-password")
-def change_password(
-    password_data: PasswordChange,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-):
-    """Change user password."""
-    user_service = UserService(db)
-    success = user_service.change_password(
-        current_user.id, password_data.current_password, password_data.new_password
-    )
-
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to change password"
-        )
-
-    return {"message": "Password changed successfully"}

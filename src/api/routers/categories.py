@@ -11,7 +11,8 @@ from src.core.database import get_db
 from src.core.dependencies import get_current_active_user
 from src.models.user import User
 from src.schemas.category import Category, CategoryCreate, CategoryUpdate
-from src.services.category_service import CategoryService
+from src.schemas.category_queries import CategoryFilter, CategoryQuery
+from src.services.category.category_service import CategoryService
 
 router = APIRouter()
 
@@ -36,7 +37,10 @@ def get_categories(
 ):
     """Get user categories."""
     category_service = CategoryService(db)
-    return category_service.get_user_categories(current_user.id, skip, limit)
+
+    # Use Pydantic model for parameter validation
+    filter_data = CategoryFilter(user_id=current_user.id, skip=skip, limit=limit)
+    return category_service.get_user_categories(filter_data)
 
 
 @router.get("/{category_id}", response_model=Category)
@@ -47,7 +51,10 @@ def get_category(
 ):
     """Get category by ID."""
     category_service = CategoryService(db)
-    category = category_service.get_category_by_id(category_id, current_user.id)
+
+    # Use Pydantic model for parameter validation
+    query_data = CategoryQuery(category_id=category_id, user_id=current_user.id)
+    category = category_service.get_category_by_id(query_data)
 
     if not category:
         raise HTTPException(
@@ -86,7 +93,10 @@ def delete_category(
 ):
     """Delete category."""
     category_service = CategoryService(db)
-    success = category_service.delete_category(category_id, current_user.id)
+
+    # Use Pydantic model for parameter validation
+    query_data = CategoryQuery(category_id=category_id, user_id=current_user.id)
+    success = category_service.delete_category(query_data)
 
     if not success:
         raise HTTPException(
@@ -107,7 +117,7 @@ def init_system_categories(
         )
 
     category_service = CategoryService(db)
-    categories = category_service.create_system_categories()
+    categories = category_service.create_system_categories(current_user.id)
 
     return {
         "message": f"Created {len(categories)} system categories",
