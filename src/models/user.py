@@ -25,12 +25,12 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
+    # Relationships - using string references to avoid circular imports
     expenses = relationship(
-        "Expense", back_populates="user", cascade="all, delete-orphan"
+        "Expense", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )
     categories = relationship(
-        "Category", back_populates="user", cascade="all, delete-orphan"
+        "Category", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )
 
     def __repr__(self) -> str:

@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from src.core.logging_config import get_logger
 from src.models.user import User
 from src.repositories.user_repository import UserRepository
 from src.schemas.user import UserCreate, UserUpdate
@@ -22,6 +23,9 @@ from src.services.authentication.password_service import (
     verify_password,
 )
 
+# Initialize logger
+logger = get_logger(__name__)
+
 
 class UserService:
     """User service for business logic operations following SOLID principles."""
@@ -29,149 +33,180 @@ class UserService:
     def __init__(self, db: Session):
         self.db = db
         self.user_repo = UserRepository(db)
+        self.logger = get_logger(self.__class__.__name__)
 
     def create_user(self, user_data: UserCreate) -> User:
         """Create a new user."""
-        # Validate email uniqueness
-        email_validation = UserValidation(email=user_data.email)
-        self._validate_email_unique(email_validation)
-
-        # Validate username uniqueness
-        username_validation = UserValidation(username=user_data.username)
-        self._validate_username_unique(username_validation)
-
-        # Create user
-        hashed_password = get_password_hash(user_data.password)
-        user = User(
-            email=user_data.email,
-            username=user_data.username,
-            hashed_password=hashed_password,
-            full_name=user_data.full_name,
+        self.logger.info(
+            "Creating new user", email=user_data.email, username=user_data.username
         )
 
-        return self.user_repo.create(user)
-
-    def get_user_by_id(self, data: UserQuery) -> Optional[User]:
-        """Get user by ID."""
-        return self.user_repo.get_by_id(data.user_id)
-
-    def get_user_by_email(self, email: str) -> Optional[User]:
-        """Get user by email."""
-        return self.user_repo.get_by_email(email)
-
-    def get_user_by_username(self, username: str) -> Optional[User]:
-        """Get user by username."""
-        return self.user_repo.get_by_username(username)
-
-    def get_users(self, data: UserFilter) -> List[User]:
-        """Get all users with pagination."""
-        return self.user_repo.get_all(data.skip, data.limit)
-
-    def update_user(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
-        """Update user."""
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            return None
-
-        # Check email uniqueness if email is being updated
-        if user_data.email and user_data.email != user.email:
-            email_validation = UserValidation(
-                email=user_data.email, exclude_user_id=user_id
-            )
+        try:
+            # Validate email uniqueness
+            email_validation = UserValidation(email=user_data.email)
             self._validate_email_unique(email_validation)
 
-        # Check username uniqueness if username is being updated
-        if user_data.username and user_data.username != user.username:
-            username_validation = UserValidation(
-                username=user_data.username, exclude_user_id=user_id
-            )
+            # Validate username uniqueness
+            username_validation = UserValidation(username=user_data.username)
             self._validate_username_unique(username_validation)
 
-        # Update user fields
-        update_data = user_data.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(user, field, value)
+            # Hash password
+            hashed_password = get_password_hash(user_data.password)
+            user_data.password = hashed_password
 
-        return self.user_repo.update(user)
+            # Create user object
+            user = User(
+                email=user_data.email,
+                username=user_data.username,
+                hashed_password=hashed_password,
+                full_name=user_data.full_name,
+                is_active=True,
+                is_superuser=False,
+            )
 
-    def delete_user(self, data: UserQuery) -> bool:
-        """Delete user."""
-        return self.user_repo.delete(data.user_id)
+            user = self.user_repo.create(user)
+            self.logger.info(
+                "User created successfully", user_id=user.id, email=user.email
+            )
+            return user
+        except HTTPException:
+            raise
+        except Exception as e:
+            self.logger.error(
+                "Failed to create user",
+                email=user_data.email,
+                error=str(e),
+                exc_info=True,
+            )
+            raise
 
-    def authenticate_user(self, data: AuthenticationQuery) -> Optional[User]:
-        """Authenticate user with email and password."""
-        user = self.user_repo.get_by_email(data.email)
-        if not user:
-            return None
-
-        if not verify_password(data.password, user.hashed_password):
-            return None
-
+    def get_user_by_id(self, user_query: UserQuery) -> Optional[User]:
+        """Get user by ID."""
+        self.logger.debug("Fetching user by ID", user_id=user_query.user_id)
+        user = self.user_repo.get_by_id(user_query.user_id)
+        if user:
+            self.logger.debug("User found by ID", user_id=user.id, email=user.email)
+        else:
+            self.logger.debug("User not found by ID", user_id=user_query.user_id)
         return user
 
-    def change_password(self, data: PasswordChangeQuery) -> bool:
-        """Change user password."""
-        user = self.user_repo.get_by_id(data.user_id)
+    def get_user_by_email(self, user_query: UserQuery) -> Optional[User]:
+        """Get user by email."""
+        self.logger.debug("Fetching user by email", email=user_query.email)
+        user = self.user_repo.get_by_email(user_query.email)
+        if user:
+            self.logger.debug("User found by email", user_id=user.id, email=user.email)
+        else:
+            self.logger.debug("User not found by email", email=user_query.email)
+        return user
+
+    def get_users(self, user_filter: UserFilter) -> List[User]:
+        """Get all users with pagination and filters."""
+        self.logger.debug(
+            "Fetching users with filters",
+            skip=user_filter.skip,
+            limit=user_filter.limit,
+        )
+        users = self.user_repo.get_all(skip=user_filter.skip, limit=user_filter.limit)
+        self.logger.debug("Users fetched successfully", count=len(users))
+        return users
+
+    def update_user(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
+        """Update an existing user."""
+        self.logger.info("Updating user", user_id=user_id)
+        user = self.user_repo.get_by_id(user_id)
         if not user:
+            self.logger.warning("User not found for update", user_id=user_id)
+            return None
+
+        # Update user fields
+        for field, value in user_data.model_dump(exclude_unset=True).items():
+            setattr(user, field, value)
+
+        user = self.user_repo.update(user)
+        self.logger.info("User updated successfully", user_id=user.id, email=user.email)
+        return user
+
+    def delete_user(self, user_query: UserQuery) -> bool:
+        """Delete a user."""
+        self.logger.info("Deleting user", user_id=user_query.user_id)
+        success = self.user_repo.delete(user_query.user_id)
+        if success:
+            self.logger.info("User deleted successfully", user_id=user_query.user_id)
+        else:
+            self.logger.warning(
+                "User not found for deletion", user_id=user_query.user_id
+            )
+        return success
+
+    def authenticate_user(self, auth_query: AuthenticationQuery) -> Optional[User]:
+        """Authenticate user with email and password."""
+        self.logger.debug("Authenticating user", email=auth_query.email)
+        user = self.user_repo.get_by_email(auth_query.email)
+        if not user:
+            self.logger.warning(
+                "Authentication failed - user not found", email=auth_query.email
+            )
+            return None
+        if not verify_password(auth_query.password, user.hashed_password):
+            self.logger.warning(
+                "Authentication failed - invalid password", email=auth_query.email
+            )
+            return None
+        self.logger.info(
+            "User authenticated successfully", user_id=user.id, email=user.email
+        )
+        return user
+
+    def change_password(self, password_query: PasswordChangeQuery) -> bool:
+        """Change user password."""
+        self.logger.info("Changing password for user", user_id=password_query.user_id)
+        user = self.user_repo.get_by_id(password_query.user_id)
+        if not user:
+            self.logger.error(
+                "Password change failed - user not found",
+                user_id=password_query.user_id,
+            )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
-        # Verify current password
-        if not verify_password(data.current_password, user.hashed_password):
+        if not verify_password(password_query.current_password, user.hashed_password):
+            self.logger.warning(
+                "Password change failed - invalid current password", user_id=user.id
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Current password is incorrect",
+                detail="Invalid current password",
             )
 
-        # Update password
-        user.hashed_password = get_password_hash(data.new_password)
+        new_hashed_password = get_password_hash(password_query.new_password)
+        user.hashed_password = new_hashed_password
         self.user_repo.update(user)
-        return True
+
+        self.logger.info("Password successfully changed", user_id=user.id)
         return True
 
-    def _validate_email_unique(self, data: UserValidation) -> None:
-        """Validate email uniqueness."""
-        if data.email and self.user_repo.is_email_taken(
-            data.email, exclude_user_id=data.exclude_user_id
-        ):
+    def _validate_email_unique(self, validation: UserValidation) -> None:
+        """Validate if email is unique."""
+        self.logger.debug("Validating email uniqueness", email=validation.email)
+        if self.user_repo.get_by_email(validation.email):
+            self.logger.warning("Email already registered", email=validation.email)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
+        self.logger.debug("Email is unique", email=validation.email)
 
-    def _validate_username_unique(self, data: UserValidation) -> None:
-        """Validate username uniqueness."""
-        if data.username and self.user_repo.is_username_taken(
-            data.username, exclude_user_id=data.exclude_user_id
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
-            )
-
-    # Backward compatibility methods for existing tests
-    def get_user_by_id_legacy(self, user_id: int) -> Optional[User]:
-        """Legacy method for backward compatibility."""
-        data = UserQuery(user_id=user_id)
-        return self.get_user_by_id(data)
-
-    def delete_user_legacy(self, user_id: int) -> bool:
-        """Legacy method for backward compatibility."""
-        data = UserQuery(user_id=user_id)
-        return self.delete_user(data)
-
-    def authenticate_user_legacy(self, email: str, password: str) -> Optional[User]:
-        """Legacy method for backward compatibility."""
-        data = AuthenticationQuery(email=email, password=password)
-        return self.authenticate_user(data)
-
-    def change_password_legacy(
-        self, user_id: int, current_password: str, new_password: str
-    ) -> bool:
-        """Legacy method for backward compatibility."""
-        data = PasswordChangeQuery(
-            user_id=user_id,
-            current_password=current_password,
-            new_password=new_password,
+    def _validate_username_unique(self, validation: UserValidation) -> None:
+        """Validate if username is unique."""
+        self.logger.debug(
+            "Validating username uniqueness", username=validation.username
         )
-        return self.change_password(data)
+        if self.user_repo.get_by_username(validation.username):
+            self.logger.warning("Username already taken", username=validation.username)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken",
+            )
+        self.logger.debug("Username is unique", username=validation.username)

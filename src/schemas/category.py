@@ -25,7 +25,9 @@ class CategoryCreate(CategoryBase):
 class CategoryUpdate(BaseModel):
     """Category update schema."""
 
-    name: Optional[str] = Field(None, min_length=1, description="Category name cannot be empty")
+    name: Optional[str] = Field(
+        None, min_length=1, description="Category name cannot be empty"
+    )
     description: Optional[str] = None
     color: Optional[str] = None
 
