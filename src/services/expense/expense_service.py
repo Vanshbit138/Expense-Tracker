@@ -99,6 +99,12 @@ class ExpenseService:
         self.logger.info("Updating expense", expense_id=expense_id, user_id=user_id)
 
         try:
+            # Fetch existing expense first
+            expense = self.expense_repo.get_by_id(expense_id, user_id)
+            if not expense:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+                )
 
             # Update fields if provided
             if expense_data.amount is not None:

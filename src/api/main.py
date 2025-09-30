@@ -48,40 +48,18 @@ app.include_router(
 )
 
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {"status": "ok"}
-
-
-@app.get("/")
-async def root():
-    """Root endpoint with API information."""
-    return {
-        "message": "Expense Tracker API",
-        "version": settings.version,
-        "docs": f"{settings.api_v1_str}/docs",
-        "health": "/health",
-    }
-
-
 def clean_validation_errors(errors):
-    """Clean validation errors to ensure JSON serialization."""
+    """Clean validation errors for better readability."""
     cleaned_errors = []
     for error in errors:
         cleaned_error = {
-            "type": error.get("type", "validation_error"),
-            "loc": error.get("loc", []),
-            "msg": error.get("msg", "Validation error"),
-            "input": error.get("input"),
+            "loc": list(error["loc"]),
+            "msg": error["msg"],
+            "type": error["type"],
         }
-
-        # Handle ValueError objects in ctx
-        if "ctx" in error and isinstance(error["ctx"], dict):
+        if "ctx" in error and error["ctx"]:
             ctx = error["ctx"]
-            if "error" in ctx and hasattr(ctx["error"], "args") and ctx["error"].args:
-                cleaned_error["msg"] = str(ctx["error"].args[0])
-            elif "reason" in ctx:
+            if "reason" in ctx:
                 cleaned_error["msg"] = ctx["reason"]
 
         cleaned_errors.append(cleaned_error)
@@ -126,16 +104,17 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
 
 @app.exception_handler(ValueError)
 async def value_error_exception_handler(request: Request, exc: ValueError):
-    """Handle ValueError exceptions."""
+    """Handle value errors."""
     logger.warning(
         "Value error occurred",
         url=str(request.url),
         method=request.method,
         error=str(exc),
     )
+
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": [{"msg": str(exc), "type": "value_error"}]},
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
     )
 
 
@@ -147,8 +126,8 @@ async def general_exception_handler(request: Request, exc: Exception):
         url=str(request.url),
         method=request.method,
         error=str(exc),
-        exc_info=True,
     )
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Internal server error"},

@@ -96,8 +96,10 @@ class CategoryService:
         self.logger.info("Updating category", category_id=category_id, user_id=user_id)
 
         try:
+            # Step 1: Fetch category instance and validate access
+            category = self.get_category_by_id(category_id, user_id)
 
-            # Update fields if provided
+            # Step 2: Update fields if provided
             if category_data.name is not None:
                 if category_data.name != category.name:
                     self._validate_name_unique(
@@ -108,7 +110,7 @@ class CategoryService:
             if category_data.description is not None:
                 category.description = category_data.description
 
-            # Save changes
+            # Step 3: Save changes
             updated_category = self.category_repo.update(category)
             self.logger.info(
                 "Category updated successfully", category_id=updated_category.id
