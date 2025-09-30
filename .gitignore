@@ -101,6 +101,8 @@ celerybeat.pid
 .env.production
 .env.staging
 .env.development
+.env.test
+.env.*
 .venv
 env/
 venv/
@@ -147,23 +149,28 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 test.db
+*.db-journal
 
 # Logs
 logs/
 *.log
+*.log.*
 
 # Temporary files
 tmp/
 temp/
+.tmp/
 
 # Security files
 *.key
 *.pem
 *.crt
 *.p12
+*.pem
 secrets/
 secrets.json
 config.json
+.secrets/
 
 # Alembic
 alembic/versions/*.py
@@ -182,3 +189,79 @@ test_syntax.py
 # Local development
 local/
 dev/
+
+# Backup files
+*.bak
+*.backup
+*_backup.py
+*_backup.*
+*.orig
+*.rej
+
+# Environment files
+.env*
+!.env.example
+
+# Cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE backup files
+*~
+*.swp
+*.swo
+
+# OS backup files
+.DS_Store
+Thumbs.db
+
+# FastAPI specific
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database migrations (keep structure but ignore generated files)
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+
+# Local configuration
+local_config.py
+local_settings.py
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Node.js (if any frontend tools are used)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# MacOS
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary Python files
+*.tmp
+*.temp

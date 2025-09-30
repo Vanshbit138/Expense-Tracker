@@ -8,10 +8,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.core.logging_config import get_logger
-from src.models.category import Category
-from src.repositories.category_repository import CategoryRepository
-from src.schemas.category import CategoryCreate, CategoryUpdate
-from src.schemas.category_queries import CategoryFilter, CategoryQuery
+from src.models.category.category import Category
+from src.repositories.category.category_repository import CategoryRepository
+from src.schemas.category.category import CategoryCreate, CategoryUpdate
+from src.schemas.category.category_queries import CategoryFilter
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -35,7 +35,13 @@ class CategoryService:
             # Validate name uniqueness for user
             self._validate_name_unique(category_data.name, user_id)
 
-            category = self.category_repo.create_category(category_data, user_id)
+            category = self.category_repo.create(
+                Category(
+                    name=category_data.name,
+                    description=category_data.description,
+                    user_id=user_id,
+                )
+            )
             self.logger.info(
                 "Category created successfully",
                 category_id=category.id,
@@ -52,63 +58,65 @@ class CategoryService:
                 error=str(e),
                 exc_info=True,
             )
-            raise
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create category",
+            )
 
-    def get_category_by_id(self, category_query: CategoryQuery) -> Optional[Category]:
+    def get_category_by_id(self, category_id: int, user_id: int) -> Category:
         """Get category by ID."""
         self.logger.debug(
-            "Fetching category by ID",
-            category_id=category_query.category_id,
-            user_id=category_query.user_id,
+            "Getting category by ID", category_id=category_id, user_id=user_id
         )
-        category = self.category_repo.get_category_by_id(
-            category_query.category_id, category_query.user_id
-        )
-        if category:
-            self.logger.debug(
-                "Category found by ID", category_id=category.id, name=category.name
+        category = self.category_repo.get_by_id(category_id)
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
             )
-        else:
-            self.logger.debug(
-                "Category not found by ID", category_id=category_query.category_id
+        if category.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to category",
             )
         return category
 
-    def get_categories(self, category_filter: CategoryFilter) -> List[Category]:
-        """Get all categories with pagination and filters."""
+    def get_user_categories(
+        self, user_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Category]:
+        """Get categories for a user."""
         self.logger.debug(
-            "Fetching categories with filters",
-            user_id=category_filter.user_id,
-            skip=category_filter.skip,
-            limit=category_filter.limit,
+            "Getting user categories", user_id=user_id, skip=skip, limit=limit
         )
-        categories = self.category_repo.get_categories(category_filter)
-        self.logger.debug("Categories fetched successfully", count=len(categories))
-        return categories
+        return self.category_repo.get_user_categories(user_id, skip=skip, limit=limit)
 
     def update_category(
         self, category_id: int, category_data: CategoryUpdate, user_id: int
-    ) -> Optional[Category]:
-        """Update an existing category."""
+    ) -> Category:
+        """Update category information."""
         self.logger.info("Updating category", category_id=category_id, user_id=user_id)
 
         try:
-            category = self.category_repo.update_category(
-                category_id, category_data, user_id
+
+            # Update fields if provided
+            if category_data.name is not None:
+                if category_data.name != category.name:
+                    self._validate_name_unique(
+                        category_data.name, user_id, exclude_id=category_id
+                    )
+                category.name = category_data.name
+
+            if category_data.description is not None:
+                category.description = category_data.description
+
+            # Save changes
+            updated_category = self.category_repo.update(category)
+            self.logger.info(
+                "Category updated successfully", category_id=updated_category.id
             )
-            if category:
-                self.logger.info(
-                    "Category updated successfully",
-                    category_id=category.id,
-                    name=category.name,
-                )
-            else:
-                self.logger.warning(
-                    "Category not found for update",
-                    category_id=category_id,
-                    user_id=user_id,
-                )
-            return category
+            return updated_category
+
+        except HTTPException:
+            raise
         except Exception as e:
             self.logger.error(
                 "Failed to update category",
@@ -117,53 +125,184 @@ class CategoryService:
                 error=str(e),
                 exc_info=True,
             )
-            raise
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update category",
+            )
 
-    def delete_category(self, category_query: CategoryQuery) -> bool:
-        """Delete a category."""
-        self.logger.info(
-            "Deleting category",
-            category_id=category_query.category_id,
-            user_id=category_query.user_id,
-        )
+    def delete_category(self, category_id: int, user_id: int) -> bool:
+        """Delete category."""
+        self.logger.info("Deleting category", category_id=category_id, user_id=user_id)
 
         try:
-            success = self.category_repo.delete_category(
-                category_query.category_id, category_query.user_id
-            )
+            success = self.category_repo.delete(category_id)
+
             if success:
                 self.logger.info(
-                    "Category deleted successfully",
-                    category_id=category_query.category_id,
+                    "Category deleted successfully", category_id=category_id
                 )
             else:
                 self.logger.warning(
-                    "Category not found for deletion",
-                    category_id=category_query.category_id,
-                    user_id=category_query.user_id,
+                    "Failed to delete category", category_id=category_id
                 )
+
             return success
+
+        except HTTPException:
+            raise
         except Exception as e:
             self.logger.error(
                 "Failed to delete category",
-                category_id=category_query.category_id,
-                user_id=category_query.user_id,
+                category_id=category_id,
+                user_id=user_id,
                 error=str(e),
                 exc_info=True,
             )
-            raise
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete category",
+            )
 
-    def _validate_name_unique(self, name: str, user_id: int) -> None:
-        """Validate if category name is unique for user."""
-        self.logger.debug(
-            "Validating category name uniqueness", name=name, user_id=user_id
-        )
-        if self.category_repo.get_category_by_name(name, user_id):
+    def get_all_categories(self, query: CategoryFilter) -> List[Category]:
+        """Get all categories with filtering and pagination."""
+        self.logger.debug("Getting all categories", filters=query.model_dump())
+
+        try:
+            categories = self.category_repo.get_all(skip=query.skip, limit=query.limit)
+
+            self.logger.debug(
+                "Categories retrieved successfully", count=len(categories)
+            )
+            return categories
+
+        except Exception as e:
+            self.logger.error("Failed to get categories", error=str(e), exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve categories",
+            )
+
+    def _validate_name_unique(
+        self, name: str, user_id: int, exclude_id: Optional[int] = None
+    ) -> None:
+        """Validate category name uniqueness for user."""
+        existing_category = self.category_repo.get_by_name(name, user_id)
+        if existing_category and (
+            exclude_id is None or existing_category.id != exclude_id
+        ):
             self.logger.warning(
-                "Category name already exists", name=name, user_id=user_id
+                "Category name validation failed - name already exists",
+                name=name,
+                user_id=user_id,
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Category name already exists",
             )
-        self.logger.debug("Category name is unique", name=name, user_id=user_id)
+
+    def create_system_categories(self, user_id: int) -> List[Category]:
+        """Create system categories for a user."""
+        self.logger.info("Creating system categories", user_id=user_id)
+
+        try:
+            # Define system categories
+            system_categories = [
+                {
+                    "name": "Food & Dining",
+                    "description": "Restaurants, groceries, and food expenses",
+                },
+                {
+                    "name": "Transportation",
+                    "description": "Gas, public transport, and vehicle expenses",
+                },
+                {
+                    "name": "Entertainment",
+                    "description": "Movies, games, and entertainment expenses",
+                },
+                {
+                    "name": "Utilities",
+                    "description": "Electricity, water, internet, and utility bills",
+                },
+                {
+                    "name": "Healthcare",
+                    "description": "Medical expenses and healthcare costs",
+                },
+                {
+                    "name": "Shopping",
+                    "description": "Clothing, electronics, and general shopping",
+                },
+                {
+                    "name": "Travel",
+                    "description": "Hotels, flights, and travel expenses",
+                },
+                {
+                    "name": "Education",
+                    "description": "Books, courses, and educational expenses",
+                },
+                {
+                    "name": "Insurance",
+                    "description": "Health, auto, and other insurance payments",
+                },
+                {
+                    "name": "Miscellaneous",
+                    "description": "Other expenses that do not fit other categories",
+                },
+            ]
+
+            created_categories = []
+            for cat_data in system_categories:
+                # Check if category already exists for this user
+                existing = self.category_repo.get_by_name(cat_data["name"], user_id)
+                if not existing:
+                    category = Category(
+                        name=cat_data["name"],
+                        description=cat_data["description"],
+                        user_id=user_id,
+                        is_system=True,
+                    )
+                    created_category = self.category_repo.create(category)
+                    created_categories.append(created_category)
+                    self.logger.debug(
+                        "System category created",
+                        category_id=created_category.id,
+                        name=created_category.name,
+                    )
+                else:
+                    self.logger.debug(
+                        "System category already exists",
+                        name=cat_data["name"],
+                        user_id=user_id,
+                    )
+
+            self.logger.info(
+                "System categories creation completed",
+                user_id=user_id,
+                created_count=len(created_categories),
+            )
+            return created_categories
+
+        except Exception as e:
+            self.logger.error(
+                "Failed to create system categories",
+                user_id=user_id,
+                error=str(e),
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create system categories",
+            )
+
+
+def _validate_category_access(self, category_id: int, user_id: int) -> Category:
+    """Validate user access to category."""
+    category = self.category_repo.get_by_id(category_id)
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
+        )
+    if category.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to category"
+        )
+    return category

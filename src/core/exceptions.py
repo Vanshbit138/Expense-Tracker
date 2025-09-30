@@ -53,7 +53,7 @@ class ValidationError(ExpenseTrackerException):
             message=message,
             error_code="VALIDATION_ERROR",
             details=details,
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,  # Changed from 400 to 422
         )
 
 
@@ -96,7 +96,7 @@ class NotFoundError(ExpenseTrackerException):
         details = details or {}
         details.update({"resource": resource, "identifier": identifier})
         super().__init__(
-            message=f"{resource} not found",
+            message=f"{resource} with ID '{identifier}' not found.",  # Fixed message format
             error_code="NOT_FOUND_ERROR",
             details=details,
             status_code=status.HTTP_404_NOT_FOUND,
@@ -119,12 +119,12 @@ class DatabaseError(ExpenseTrackerException):
     """Raised when database operations fail."""
 
     def __init__(
-        self, message: str, operation: str, details: Optional[Dict[str, Any]] = None
+        self, operation: str, message: str, details: Optional[Dict[str, Any]] = None
     ):
         details = details or {}
         details["operation"] = operation
         super().__init__(
-            message=message,
+            message=f"Database operation '{operation}' failed: {message}",  # Fixed message format
             error_code="DATABASE_ERROR",
             details=details,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -140,7 +140,7 @@ class ExternalServiceError(ExpenseTrackerException):
         details = details or {}
         details["service"] = service
         super().__init__(
-            message=message,
+            message=f"External service '{service}' failed: {message}",  # Fixed message format
             error_code="EXTERNAL_SERVICE_ERROR",
             details=details,
             status_code=status.HTTP_502_BAD_GATEWAY,

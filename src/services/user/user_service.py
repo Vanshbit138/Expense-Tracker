@@ -2,20 +2,19 @@
 User service for business logic operations.
 """
 
-from typing import List, Optional
+from typing import List
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.core.logging_config import get_logger
-from src.models.user import User
-from src.repositories.user_repository import UserRepository
-from src.schemas.user import UserCreate, UserUpdate
-from src.schemas.user_queries import (
+from src.models.user.user import User
+from src.repositories.user.user_repository import UserRepository
+from src.schemas.user.user import UserCreate, UserUpdate
+from src.schemas.user.user_queries import (
     AuthenticationQuery,
     PasswordChangeQuery,
     UserFilter,
-    UserQuery,
     UserValidation,
 )
 from src.services.authentication.password_service import (
@@ -52,23 +51,27 @@ class UserService:
 
             # Hash password
             hashed_password = get_password_hash(user_data.password)
-            user_data.password = hashed_password
 
             # Create user object
             user = User(
                 email=user_data.email,
                 username=user_data.username,
-                hashed_password=hashed_password,
                 full_name=user_data.full_name,
+                hashed_password=hashed_password,
                 is_active=True,
                 is_superuser=False,
             )
 
-            user = self.user_repo.create(user)
+            # Save to database
+            created_user = self.user_repo.create(user)
+
             self.logger.info(
-                "User created successfully", user_id=user.id, email=user.email
+                "User created successfully",
+                user_id=created_user.id,
+                email=created_user.email,
             )
-            return user
+            return created_user
+
         except HTTPException:
             raise
         except Exception as e:
@@ -78,68 +81,109 @@ class UserService:
                 error=str(e),
                 exc_info=True,
             )
-            raise
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create user",
+            )
 
-    def get_user_by_id(self, user_query: UserQuery) -> Optional[User]:
+    def get_user_by_id(self, user_id: int) -> User:
         """Get user by ID."""
-        self.logger.debug("Fetching user by ID", user_id=user_query.user_id)
-        user = self.user_repo.get_by_id(user_query.user_id)
-        if user:
-            self.logger.debug("User found by ID", user_id=user.id, email=user.email)
-        else:
-            self.logger.debug("User not found by ID", user_id=user_query.user_id)
-        return user
-
-    def get_user_by_email(self, user_query: UserQuery) -> Optional[User]:
-        """Get user by email."""
-        self.logger.debug("Fetching user by email", email=user_query.email)
-        user = self.user_repo.get_by_email(user_query.email)
-        if user:
-            self.logger.debug("User found by email", user_id=user.id, email=user.email)
-        else:
-            self.logger.debug("User not found by email", email=user_query.email)
-        return user
-
-    def get_users(self, user_filter: UserFilter) -> List[User]:
-        """Get all users with pagination and filters."""
-        self.logger.debug(
-            "Fetching users with filters",
-            skip=user_filter.skip,
-            limit=user_filter.limit,
-        )
-        users = self.user_repo.get_all(skip=user_filter.skip, limit=user_filter.limit)
-        self.logger.debug("Users fetched successfully", count=len(users))
-        return users
-
-    def update_user(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
-        """Update an existing user."""
-        self.logger.info("Updating user", user_id=user_id)
+        self.logger.debug("Getting user by ID", user_id=user_id)
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            self.logger.warning("User not found for update", user_id=user_id)
-            return None
-
-        # Update user fields
-        for field, value in user_data.model_dump(exclude_unset=True).items():
-            setattr(user, field, value)
-
-        user = self.user_repo.update(user)
-        self.logger.info("User updated successfully", user_id=user.id, email=user.email)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
         return user
 
-    def delete_user(self, user_query: UserQuery) -> bool:
-        """Delete a user."""
-        self.logger.info("Deleting user", user_id=user_query.user_id)
-        success = self.user_repo.delete(user_query.user_id)
-        if success:
-            self.logger.info("User deleted successfully", user_id=user_query.user_id)
-        else:
-            self.logger.warning(
-                "User not found for deletion", user_id=user_query.user_id
+    def get_user_by_email(self, email: str) -> User:
+        """Get user by email."""
+        self.logger.debug("Getting user by email", email=email)
+        user = self.user_repo.get_by_email(email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
-        return success
+        return user
 
-    def authenticate_user(self, auth_query: AuthenticationQuery) -> Optional[User]:
+    def get_user_by_username(self, username: str) -> User:
+        """Get user by username."""
+        self.logger.debug("Getting user by username", username=username)
+        user = self.user_repo.get_by_username(username)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+        return user
+
+    def update_user(self, user_id: int, user_data: UserUpdate) -> User:
+        """Update user information."""
+        self.logger.info("Updating user", user_id=user_id)
+
+        try:
+
+            # Update fields if provided
+            if user_data.email is not None:
+                if user_data.email != user.email:
+                    email_validation = UserValidation(email=user_data.email)
+                    self._validate_email_unique(email_validation)
+                user.email = user_data.email
+
+            if user_data.username is not None:
+                if user_data.username != user.username:
+                    username_validation = UserValidation(username=user_data.username)
+                    self._validate_username_unique(username_validation)
+                user.username = user_data.username
+
+            if user_data.full_name is not None:
+                user.full_name = user_data.full_name
+
+            if user_data.is_active is not None:
+                user.is_active = user_data.is_active
+
+            # Save changes
+            updated_user = self.user_repo.update(user)
+
+            self.logger.info("User updated successfully", user_id=updated_user.id)
+            return updated_user
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            self.logger.error(
+                "Failed to update user", user_id=user_id, error=str(e), exc_info=True
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update user",
+            )
+
+    def delete_user(self, user_id: int) -> bool:
+        """Delete user."""
+        self.logger.info("Deleting user", user_id=user_id)
+
+        try:
+            success = self.user_repo.delete(user_id)
+
+            if success:
+                self.logger.info("User deleted successfully", user_id=user_id)
+            else:
+                self.logger.warning("Failed to delete user", user_id=user_id)
+
+            return success
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            self.logger.error(
+                "Failed to delete user", user_id=user_id, error=str(e), exc_info=True
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete user",
+            )
+
+    def authenticate_user(self, auth_query: AuthenticationQuery) -> User:
         """Authenticate user with email and password."""
         self.logger.debug("Authenticating user", email=auth_query.email)
         user = self.user_repo.get_by_email(auth_query.email)
@@ -147,12 +191,18 @@ class UserService:
             self.logger.warning(
                 "Authentication failed - user not found", email=auth_query.email
             )
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
         if not verify_password(auth_query.password, user.hashed_password):
             self.logger.warning(
                 "Authentication failed - invalid password", email=auth_query.email
             )
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
         self.logger.info(
             "User authenticated successfully", user_id=user.id, email=user.email
         )
@@ -188,25 +238,43 @@ class UserService:
         return True
 
     def _validate_email_unique(self, validation: UserValidation) -> None:
-        """Validate if email is unique."""
-        self.logger.debug("Validating email uniqueness", email=validation.email)
-        if self.user_repo.get_by_email(validation.email):
-            self.logger.warning("Email already registered", email=validation.email)
+        """Validate email uniqueness."""
+        existing_user = self.user_repo.get_by_email(validation.email)
+        if existing_user:
+            self.logger.warning(
+                "Email validation failed - email already exists", email=validation.email
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
-        self.logger.debug("Email is unique", email=validation.email)
 
     def _validate_username_unique(self, validation: UserValidation) -> None:
-        """Validate if username is unique."""
-        self.logger.debug(
-            "Validating username uniqueness", username=validation.username
-        )
-        if self.user_repo.get_by_username(validation.username):
-            self.logger.warning("Username already taken", username=validation.username)
+        """Validate username uniqueness."""
+        existing_user = self.user_repo.get_by_username(validation.username)
+        if existing_user:
+            self.logger.warning(
+                "Username validation failed - username already exists",
+                username=validation.username,
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already taken",
             )
-        self.logger.debug("Username is unique", username=validation.username)
+
+    def get_users(self, query: UserFilter) -> List[User]:
+        """Get users with filtering and pagination."""
+        self.logger.debug("Getting users", filters=query.model_dump())
+
+        try:
+            users = self.user_repo.get_all(skip=query.skip, limit=query.limit)
+
+            self.logger.debug("Users retrieved successfully", count=len(users))
+            return users
+
+        except Exception as e:
+            self.logger.error("Failed to get users", error=str(e), exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve users",
+            )

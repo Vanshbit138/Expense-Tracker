@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from src.core.database import get_db
 from src.core.security import verify_token
-from src.models.user import User
-from src.repositories.user_repository import UserRepository
+from src.models.user.user import User
+from src.repositories.user.user_repository import UserRepository
 
 # Security scheme (do not auto-error so we can unify on 401)
 security = HTTPBearer(auto_error=False)
