@@ -144,3 +144,15 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown event."""
     logger.info("Shutting down Expense Tracker API")
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {"message": "Welcome to the Expense Tracker API"}

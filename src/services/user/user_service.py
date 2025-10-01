@@ -121,6 +121,12 @@ class UserService:
         self.logger.info("Updating user", user_id=user_id)
 
         try:
+            # Get the user first
+            user = self.user_repo.get_by_id(user_id)
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
 
             # Update fields if provided
             if user_data.email is not None:
