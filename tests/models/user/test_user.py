@@ -19,7 +19,7 @@ class TestUserModel:
         user = User(
             email="test@example.com",
             username="testuser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
             full_name="Test User",
             is_active=True,
             is_superuser=False,
@@ -43,7 +43,7 @@ class TestUserModel:
         user = User(
             email="minimal@example.com",
             username="minimaluser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user)
@@ -62,13 +62,13 @@ class TestUserModel:
         user1 = User(
             email="duplicate@example.com",
             username="user1",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         user2 = User(
             email="duplicate@example.com",
             username="user2",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user1)
@@ -84,13 +84,13 @@ class TestUserModel:
         user1 = User(
             email="user1@example.com",
             username="duplicate_username",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         user2 = User(
             email="user2@example.com",
             username="duplicate_username",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user1)
@@ -106,7 +106,7 @@ class TestUserModel:
         user = User(
             email="repr@example.com",
             username="repruser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user)
@@ -134,7 +134,7 @@ class TestUserModel:
         user = User(
             email="timestamps@example.com",
             username="timestampsuser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user)
@@ -151,7 +151,7 @@ class TestUserModel:
         user = User(
             email="defaults@example.com",
             username="defaultsuser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user)
@@ -175,7 +175,7 @@ class TestUserModel:
         user = User(
             email=email,
             username=f"user_{email.split('@')[0]}",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user)
@@ -189,7 +189,7 @@ class TestUserModel:
         user = User(
             email="update@example.com",
             username="updateuser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         db_session.add(user)
@@ -212,7 +212,7 @@ class TestUserModel:
 
     def test_user_password_hashing(self, db_session):
         """Test that password is properly hashed."""
-        password = "testpassword123"
+        password = "TestPass123!"
         user = User(
             email="password@example.com",
             username="passworduser",

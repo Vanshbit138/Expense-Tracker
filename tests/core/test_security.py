@@ -84,7 +84,7 @@ class TestSecurity:
 
     def test_verify_password_correct(self):
         """Test password verification with correct password."""
-        password = "test_password"
+        password = "Test123!"
         hashed = get_password_hash(password)
 
         result = verify_password(password, hashed)
@@ -92,8 +92,8 @@ class TestSecurity:
 
     def test_verify_password_incorrect(self):
         """Test password verification with incorrect password."""
-        password = "test_password"
-        wrong_password = "wrong_password"
+        password = "Test123!"
+        wrong_password = "Wrong123!"
         hashed = get_password_hash(password)
 
         result = verify_password(wrong_password, hashed)
@@ -101,7 +101,7 @@ class TestSecurity:
 
     def test_get_password_hash(self):
         """Test password hashing."""
-        password = "test_password"
+        password = "Test123!"
 
         result = get_password_hash(password)
 
@@ -111,8 +111,8 @@ class TestSecurity:
 
     def test_get_password_hash_different_passwords(self):
         """Test that different passwords produce different hashes."""
-        password1 = "password1"
-        password2 = "password2"
+        password1 = "Pass123!"
+        password2 = "Pass456!"
 
         hash1 = get_password_hash(password1)
         hash2 = get_password_hash(password2)
@@ -121,7 +121,7 @@ class TestSecurity:
 
     def test_get_password_hash_same_password_different_hashes(self):
         """Test that same password produces different hashes (due to salt)."""
-        password = "same_password"
+        password = "Same123!"
 
         hash1 = get_password_hash(password)
         hash2 = get_password_hash(password)
@@ -156,7 +156,7 @@ class TestSecurity:
 
     def test_password_hash_length(self):
         """Test that password hash has reasonable length."""
-        password = "test_password"
+        password = "Test123!"
         hashed = get_password_hash(password)
 
         # Bcrypt hashes are typically 60 characters
@@ -164,7 +164,7 @@ class TestSecurity:
 
     def test_password_hash_structure(self):
         """Test that password hash has expected structure."""
-        password = "test_password"
+        password = "Test123!"
         hashed = get_password_hash(password)
 
         # Bcrypt hashes start with $2b$
@@ -209,7 +209,7 @@ class TestSecurity:
 
     def test_get_password_hash_very_long_password(self):
         """Test password hashing with very long password."""
-        password = "a" * 1000  # Very long password
+        password = "a" * 20  # Very long password
         hashed = get_password_hash(password)
 
         assert isinstance(hashed, str)

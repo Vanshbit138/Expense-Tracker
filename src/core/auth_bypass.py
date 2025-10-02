@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from src.core.config import settings
 from src.core.database import get_db
 from src.core.logging_config import get_logger
-from src.models.user import User
-from src.repositories.user_repository import UserRepository
+from src.models.user.user import User
+from src.repositories.user.user_repository import UserRepository
 
 logger = get_logger(__name__)
 
@@ -35,13 +35,13 @@ class AuthBypass:
                 return test_user
 
             # Create test user if it doesn't exist
-            from src.schemas.user import UserCreate
+            from src.schemas.user.user import UserCreate
             from src.services.authentication.password_service import get_password_hash
 
             test_user_data = UserCreate(
                 email="test@example.com",
                 username="testuser",
-                password="testpass123",
+                password="TestPass123!",
                 full_name="Test User",
             )
 

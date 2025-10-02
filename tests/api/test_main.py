@@ -27,13 +27,13 @@ class TestMainApp:
 
     def test_docs_endpoint(self, client: TestClient):
         """Test OpenAPI docs endpoint."""
-        response = client.get("/docs")
+        response = client.get("/api/v1/docs")
 
         assert response.status_code == 200
 
     def test_openapi_endpoint(self, client: TestClient):
         """Test OpenAPI schema endpoint."""
-        response = client.get("/openapi.json")
+        response = client.get("/api/v1/openapi.json")
 
         assert response.status_code == 200
         data = response.json()
@@ -43,16 +43,18 @@ class TestMainApp:
 
     def test_cors_headers(self, client: TestClient):
         """Test CORS headers are present."""
-        response = client.get("/health")
+        # Make a cross-origin request by adding Origin header
+        response = client.get("/health", headers={"Origin": "http://localhost:3000"})
 
-        # CORS headers should be present
+        # CORS headers should be present for cross-origin requests
         assert "access-control-allow-origin" in response.headers
-        assert "access-control-allow-methods" in response.headers
-        assert "access-control-allow-headers" in response.headers
+        assert "access-control-allow-credentials" in response.headers
+        # Note: access-control-allow-methods and access-control-allow-headers
+        # are only added for preflight OPTIONS requests, not for actual requests
 
     def test_router_inclusion(self, client: TestClient):
         """Test that all routers are properly included."""
-        response = client.get("/openapi.json")
+        response = client.get("/api/v1/openapi.json")
 
         assert response.status_code == 200
         data = response.json()
@@ -75,8 +77,9 @@ class TestMainApp:
         assert "/api/v1/expenses/{expense_id}" in paths
 
         # Analytics endpoints
-        assert "/api/v1/analytics/expenses" in paths
-        assert "/api/v1/analytics/categories" in paths
+        assert "/api/v1/analytics/stats" in paths
+        assert "/api/v1/analytics/category-stats" in paths
+        assert "/api/v1/analytics/monthly/{year}/{month}" in paths
 
     def test_exception_handling(self, client: TestClient):
         """Test that exception handlers are working."""
@@ -86,7 +89,7 @@ class TestMainApp:
 
     def test_api_versioning(self, client: TestClient):
         """Test that API versioning is properly configured."""
-        response = client.get("/openapi.json")
+        response = client.get("/api/v1/openapi.json")
 
         assert response.status_code == 200
         data = response.json()
@@ -99,7 +102,7 @@ class TestMainApp:
 
     def test_application_info(self, client: TestClient):
         """Test application information in OpenAPI schema."""
-        response = client.get("/openapi.json")
+        response = client.get("/api/v1/openapi.json")
 
         assert response.status_code == 200
         data = response.json()
@@ -143,12 +146,12 @@ class TestMainApp:
         assert response.status_code == 200
 
         # Docs should be public
-        response = client.get("/docs")
+        response = client.get("/api/v1/docs")
         assert response.status_code == 200
 
     def test_openapi_schema_structure(self, client: TestClient):
         """Test OpenAPI schema structure."""
-        response = client.get("/openapi.json")
+        response = client.get("/api/v1/openapi.json")
 
         assert response.status_code == 200
         data = response.json()
@@ -174,7 +177,7 @@ class TestMainApp:
 
     def test_router_tags(self, client: TestClient):
         """Test that router tags are properly configured."""
-        response = client.get("/openapi.json")
+        response = client.get("/api/v1/openapi.json")
 
         assert response.status_code == 200
         data = response.json()

@@ -38,10 +38,16 @@ def create_expense(
         expense_service = ExpenseService(db)
         expense = expense_service.create_expense(expense_data, current_user.id)
 
-        logger.info("Expense created successfully", expense_id=expense.id, user_id=current_user.id)
+        logger.info(
+            "Expense created successfully",
+            expense_id=expense.id,
+            user_id=current_user.id,
+        )
         return expense
     except HTTPException as e:
-        logger.warning("Expense creation failed", user_id=current_user.id, error=e.detail)
+        logger.warning(
+            "Expense creation failed", user_id=current_user.id, error=e.detail
+        )
         raise
     except Exception as e:
         logger.error(
@@ -111,9 +117,15 @@ def update_expense(
 
     try:
         expense_service = ExpenseService(db)
-        updated_expense = expense_service.update_expense(expense_id, expense_data, current_user.id)
+        updated_expense = expense_service.update_expense(
+            expense_id, expense_data, current_user.id
+        )
 
-        logger.info("Expense updated successfully", expense_id=expense_id, user_id=current_user.id)
+        logger.info(
+            "Expense updated successfully",
+            expense_id=expense_id,
+            user_id=current_user.id,
+        )
         return updated_expense
     except HTTPException as e:
         logger.warning("Expense update failed", expense_id=expense_id, error=e.detail)
@@ -149,7 +161,11 @@ def delete_expense(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
             )
 
-        logger.info("Expense deleted successfully", expense_id=expense_id, user_id=current_user.id)
+        logger.info(
+            "Expense deleted successfully",
+            expense_id=expense_id,
+            user_id=current_user.id,
+        )
         return {"message": "Expense deleted successfully"}
     except HTTPException as e:
         logger.warning("Expense deletion failed", expense_id=expense_id, error=e.detail)

@@ -8,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exceptions import ConflictError, ValidationError
 from src.core.logging_config import LoggerMixin
-from src.models.user import User
+from src.models.user.user import User
 from src.repositories.async_base_repository import AsyncBaseRepository
-from src.schemas.user import UserCreate, UserUpdate
-from src.schemas.user_queries import (
+from src.schemas.user.user import UserCreate, UserUpdate
+from src.schemas.user.user_queries import (
     AuthenticationQuery,
     PasswordChangeQuery,
     UserFilter,

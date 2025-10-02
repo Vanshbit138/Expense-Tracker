@@ -2,7 +2,6 @@
 Tests for UserRepository.
 """
 
-
 from src.models.user.user import User
 from src.repositories.user.user_repository import UserRepository
 from src.services.authentication.password_service import get_password_hash
@@ -18,7 +17,7 @@ class TestUserRepository:
         user = User(
             email="test@example.com",
             username="testuser",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
             full_name="Test User",
         )
 
@@ -102,7 +101,7 @@ class TestUserRepository:
             user = User(
                 email=f"user{i}@example.com",
                 username=f"user{i}",
-                hashed_password=get_password_hash("password123"),
+                hashed_password=get_password_hash("Pass123!"),
             )
             db_session.add(user)
             users.append(user)
@@ -218,7 +217,7 @@ class TestUserRepository:
         user = User(
             email="commit@example.com",
             username="committest",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Pass123!"),
         )
 
         created_user = user_repo.create(user)
