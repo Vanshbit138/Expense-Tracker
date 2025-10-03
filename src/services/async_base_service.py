@@ -70,8 +70,8 @@ class AsyncBaseService(Generic[ServiceType], LoggerMixin):
         except Exception as e:
             self.logger.error(f"Failed {operation_name}", error=str(e), exc_info=True)
             raise DatabaseError(
-                f"Database operation failed: {operation_name}",
                 operation=operation_name,
+                message=f"Database operation failed: {operation_name}",
                 details={"error": str(e)},
             )
 

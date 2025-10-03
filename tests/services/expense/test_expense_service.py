@@ -266,6 +266,18 @@ class TestExpenseService:
         assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert exc_info.value.detail == "Failed to delete expense"
 
+    def test_delete_expense_http_exception(self, expense_service):
+        """Test delete expense with HTTPException (should be re-raised)."""
+        expense_service.expense_repo.delete.side_effect = HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            expense_service.delete_expense(expense_id=1, user_id=1)
+
+        assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
+        assert exc_info.value.detail == "Access denied"
+
     def test_get_all_expenses_success(self, expense_service, sample_expense):
         """Test successful get all expenses."""
         query = ExpenseFilter(skip=0, limit=10)
