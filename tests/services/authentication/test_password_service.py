@@ -2,7 +2,6 @@
 Tests for password service.
 """
 
-
 import pytest
 
 from src.services.authentication.password_service import (
