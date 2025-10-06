@@ -69,7 +69,7 @@ class TestCategoryAPI:
             mock_service.create_category.return_value = mock_category
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -97,7 +97,7 @@ class TestCategoryAPI:
             mock_service.get_user_categories.return_value = [mock_category]
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -123,7 +123,7 @@ class TestCategoryAPI:
             mock_service.get_user_categories.return_value = [mock_category]
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -148,7 +148,7 @@ class TestCategoryAPI:
             mock_service.get_category_by_id.return_value = mock_category
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -173,7 +173,7 @@ class TestCategoryAPI:
             mock_service.get_category_by_id.return_value = None
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -199,7 +199,7 @@ class TestCategoryAPI:
             mock_service.update_category.return_value = mock_category
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -227,7 +227,7 @@ class TestCategoryAPI:
             mock_service.update_category.return_value = None
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -254,7 +254,7 @@ class TestCategoryAPI:
             mock_service.delete_category.return_value = True
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -279,7 +279,7 @@ class TestCategoryAPI:
             mock_service.delete_category.return_value = False
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -303,7 +303,7 @@ class TestCategoryAPI:
             mock_service.create_system_categories.return_value = [mock_category]
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_superuser,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -328,7 +328,7 @@ class TestCategoryAPI:
     def test_init_system_categories_unauthorized(self, mock_user):
         """Test system categories initialization with unauthorized user."""
         with patch(
-            "src.api.category.categories.get_current_active_user",
+            "src.api.category.categories.get_current_active_user_with_bypass",
             return_value=mock_user,
         ):
             with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -355,7 +355,7 @@ class TestCategoryAPI:
             mock_service.create_system_categories.return_value = mock_categories
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_superuser,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -390,7 +390,7 @@ class TestCategoryAPI:
             mock_service.create_category.return_value = Mock()
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -414,7 +414,7 @@ class TestCategoryAPI:
             mock_service.get_user_categories.return_value = []
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -436,7 +436,7 @@ class TestCategoryAPI:
             mock_service.get_category_by_id.return_value = mock_category
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -458,7 +458,7 @@ class TestCategoryAPI:
             mock_service.update_category.return_value = mock_category
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -483,7 +483,7 @@ class TestCategoryAPI:
             mock_service.delete_category.return_value = True
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:
@@ -503,7 +503,7 @@ class TestCategoryAPI:
             mock_service.create_system_categories.return_value = []
 
             with patch(
-                "src.api.category.categories.get_current_active_user",
+                "src.api.category.categories.get_current_active_user_with_bypass",
                 return_value=mock_superuser,
             ):
                 with patch("src.api.category.categories.get_db") as mock_get_db:

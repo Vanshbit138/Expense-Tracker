@@ -13,6 +13,7 @@ from sqlalchemy.pool import StaticPool
 
 # Set test environment BEFORE importing app
 os.environ["TESTING"] = "true"
+os.environ["DEBUG"] = "false"  # Disable authentication bypass for tests
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only-32-chars"
 os.environ[

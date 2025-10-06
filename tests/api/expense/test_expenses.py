@@ -75,7 +75,7 @@ class TestExpenseAPI:
 
             # This would be called by FastAPI's dependency injection
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -104,7 +104,7 @@ class TestExpenseAPI:
             )
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -130,7 +130,7 @@ class TestExpenseAPI:
             mock_service.create_expense.side_effect = Exception("Database error")
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -162,7 +162,7 @@ class TestExpenseAPI:
             mock_service.get_user_expenses.return_value = [mock_expense]
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -193,7 +193,7 @@ class TestExpenseAPI:
             mock_service.get_user_expenses.return_value = [mock_expense]
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -223,7 +223,7 @@ class TestExpenseAPI:
             mock_service.get_expense_by_id.return_value = mock_expense
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -248,7 +248,7 @@ class TestExpenseAPI:
             mock_service.get_expense_by_id.return_value = None
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -272,7 +272,7 @@ class TestExpenseAPI:
             mock_service.update_expense.return_value = mock_expense
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -302,7 +302,7 @@ class TestExpenseAPI:
             )
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -331,7 +331,7 @@ class TestExpenseAPI:
             mock_service.update_expense.side_effect = Exception("Database error")
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -364,7 +364,7 @@ class TestExpenseAPI:
             mock_service.delete_expense.return_value = True
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -387,7 +387,7 @@ class TestExpenseAPI:
             mock_service.delete_expense.return_value = False
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -413,7 +413,7 @@ class TestExpenseAPI:
             )
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -435,7 +435,7 @@ class TestExpenseAPI:
             mock_service.delete_expense.side_effect = Exception("Database error")
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -463,7 +463,7 @@ class TestExpenseAPI:
             mock_service.get_monthly_expenses.return_value = [mock_expense]
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -484,7 +484,8 @@ class TestExpenseAPI:
     def test_get_monthly_expenses_invalid_month_low(self, mock_user):
         """Test monthly expenses with invalid month (too low)."""
         with patch(
-            "src.api.expense.expenses.get_current_active_user", return_value=mock_user
+            "src.api.expense.expenses.get_current_active_user_with_bypass",
+            return_value=mock_user,
         ):
             with patch("src.api.expense.expenses.get_db") as mock_get_db:
                 mock_db = Mock()
@@ -503,7 +504,8 @@ class TestExpenseAPI:
     def test_get_monthly_expenses_invalid_month_high(self, mock_user):
         """Test monthly expenses with invalid month (too high)."""
         with patch(
-            "src.api.expense.expenses.get_current_active_user", return_value=mock_user
+            "src.api.expense.expenses.get_current_active_user_with_bypass",
+            return_value=mock_user,
         ):
             with patch("src.api.expense.expenses.get_db") as mock_get_db:
                 mock_db = Mock()
@@ -526,7 +528,7 @@ class TestExpenseAPI:
             mock_service.get_monthly_expenses.return_value = [mock_expense]
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -567,7 +569,7 @@ class TestExpenseAPI:
             mock_service.create_expense.return_value = mock_expense
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -595,7 +597,7 @@ class TestExpenseAPI:
             mock_service.get_user_expenses.return_value = [mock_expense]
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -624,7 +626,7 @@ class TestExpenseAPI:
             mock_service.get_expense_by_id.return_value = mock_expense
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -648,7 +650,7 @@ class TestExpenseAPI:
             mock_service.update_expense.return_value = mock_expense
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -677,7 +679,7 @@ class TestExpenseAPI:
             mock_service.delete_expense.return_value = True
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:
@@ -701,7 +703,7 @@ class TestExpenseAPI:
             mock_service.get_monthly_expenses.return_value = [mock_expense]
 
             with patch(
-                "src.api.expense.expenses.get_current_active_user",
+                "src.api.expense.expenses.get_current_active_user_with_bypass",
                 return_value=mock_user,
             ):
                 with patch("src.api.expense.expenses.get_db") as mock_get_db:

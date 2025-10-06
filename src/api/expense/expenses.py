@@ -8,8 +8,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from src.core.auth_bypass import get_current_active_user_with_bypass
 from src.core.database import get_db
-from src.core.dependencies import get_current_active_user
 from src.core.logging_config import get_logger
 from src.models.user.user import User
 from src.schemas.expense.expense import Expense, ExpenseCreate, ExpenseUpdate
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 @router.post("/", response_model=Expense, status_code=201)
 def create_expense(
     expense_data: ExpenseCreate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Create a new expense."""
@@ -68,7 +68,7 @@ def get_expenses(
     limit: int = Query(20, ge=1, le=100, description="Number of expenses to return"),
     start_date: Optional[date] = Query(None, description="Start date for filtering"),
     end_date: Optional[date] = Query(None, description="End date for filtering"),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get user's expenses with optional filtering."""
@@ -88,7 +88,7 @@ def get_expenses(
 @router.get("/{expense_id}", response_model=Expense)
 def get_expense(
     expense_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get a specific expense by ID."""
@@ -109,7 +109,7 @@ def get_expense(
 def update_expense(
     expense_id: int,
     expense_data: ExpenseUpdate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Update an existing expense."""
@@ -146,7 +146,7 @@ def update_expense(
 @router.delete("/{expense_id}")
 def delete_expense(
     expense_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Delete an expense."""
@@ -187,7 +187,7 @@ def delete_expense(
 def get_monthly_expenses(
     year: int,
     month: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get expenses for a specific month."""

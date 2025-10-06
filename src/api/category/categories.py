@@ -7,8 +7,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from src.core.auth_bypass import get_current_active_user_with_bypass
 from src.core.database import get_db
-from src.core.dependencies import get_current_active_user
 from src.models.user.user import User
 from src.schemas.category.category import Category, CategoryCreate, CategoryUpdate
 from src.services.category.category_service import CategoryService
@@ -19,7 +19,7 @@ router = APIRouter()
 @router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
 def create_category(
     category_data: CategoryCreate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Create a new category."""
@@ -31,7 +31,7 @@ def create_category(
 def get_categories(
     skip: int = Query(0, ge=0, description="Number of categories to skip"),
     limit: int = Query(100, ge=1, le=100, description="Number of categories to return"),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get user categories."""
@@ -44,7 +44,7 @@ def get_categories(
 @router.get("/{category_id}", response_model=Category)
 def get_category(
     category_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get category by ID."""
@@ -65,7 +65,7 @@ def get_category(
 def update_category(
     category_id: int,
     category_data: CategoryUpdate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Update category."""
@@ -85,7 +85,7 @@ def update_category(
 @router.delete("/{category_id}")
 def delete_category(
     category_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Delete category."""
@@ -104,7 +104,8 @@ def delete_category(
 
 @router.post("/init-system-categories")
 def init_system_categories(
-    current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user_with_bypass),
+    db: Session = Depends(get_db),
 ):
     """Initialize system categories (admin only)."""
     if not current_user.is_superuser:

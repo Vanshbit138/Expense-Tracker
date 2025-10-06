@@ -221,7 +221,12 @@ class TestAsyncBaseRepository:
         with (
             patch("src.repositories.async_base_repository.select") as mock_select,
             patch("src.repositories.async_base_repository.selectinload") as _,
+            patch("src.core.logging_config.get_logger") as mock_get_logger,
         ):
+            # Mock the logger to prevent logging issues
+            mock_logger = Mock()
+            mock_get_logger.return_value = mock_logger
+
             mock_query = Mock()
             mock_select.return_value = mock_query
             mock_query.where.return_value = mock_query

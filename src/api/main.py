@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +11,10 @@ from src.api.category.categories import router as categories_router
 from src.api.expense.expenses import router as expenses_router
 from src.api.user.analytics import router as analytics_router
 from src.core.config import settings
-from src.core.logging_config import get_logger
+from src.core.logging_config import get_logger, setup_logging
+
+# Initialize logging system FIRST
+setup_logging()
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -138,6 +143,8 @@ async def general_exception_handler(request: Request, exc: Exception):
 async def startup_event():
     """Application startup event."""
     logger.info("Starting up Expense Tracker API")
+    logger.info(f"DEBUG setting: {settings.debug}")
+    logger.info(f"Environment DEBUG: {os.getenv('DEBUG')}")
 
 
 @app.on_event("shutdown")

@@ -90,26 +90,24 @@ class TestAuthBypassFunctions:
     """Test cases for auth bypass functions."""
 
     @patch("src.core.auth_bypass.settings")
-    @patch("src.core.auth_bypass.AuthBypass")
-    def test_get_auth_bypass_user_enabled(self, mock_auth_bypass_class, mock_settings):
+    @patch("src.services.authentication.password_service.get_password_hash")
+    def test_get_auth_bypass_user_enabled(self, mock_hash, mock_settings):
         """Test get_auth_bypass_user when bypass is enabled."""
         mock_settings.debug = True
         mock_db = MagicMock()
-
-        test_user = MagicMock()
-        test_user.id = 1
-        test_user.email = "test@example.com"
-        test_user.username = "testuser"
-        test_user.hashed_password = "hashed"
-        test_user.is_active = True
-
-        mock_auth_bypass = MagicMock()
-        mock_auth_bypass.get_test_user.return_value = test_user
-        mock_auth_bypass_class.return_value = mock_auth_bypass
+        mock_hash.return_value = "hashed_password"
 
         result = get_auth_bypass_user(mock_db, bypass_enabled=True)
 
-        assert result == test_user
+        # Check that we get a real User object with correct attributes
+        assert result is not None
+        assert result.id == 999999
+        assert result.email == "test@example.com"
+        assert result.username == "testuser"
+        assert result.full_name == "Test User"
+        assert result.is_active is True
+        assert result.is_superuser is False
+        assert result.hashed_password == "hashed_password"
 
     def test_get_auth_bypass_user_disabled(self):
         """Test get_auth_bypass_user when bypass is disabled."""

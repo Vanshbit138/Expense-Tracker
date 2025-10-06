@@ -78,8 +78,30 @@ def get_auth_bypass_user(
         return None
 
     try:
-        auth_bypass = AuthBypass(db)
-        return auth_bypass.get_test_user()
+        # Handle the case where db might be a Depends object
+        if hasattr(db, "__call__") and not hasattr(db, "query"):
+            # This is a Depends object, we need to resolve it
+            from src.core.database import get_db
+
+            db = next(get_db())
+
+        # Create a simple test user without database operations
+        from src.models.user.user import User
+        from src.services.authentication.password_service import get_password_hash
+
+        test_user = User(
+            id=999999,  # Use a high ID to avoid conflicts
+            email="test@example.com",
+            username="testuser",
+            hashed_password=get_password_hash("TestPass123!"),
+            full_name="Test User",
+            is_active=True,
+            is_superuser=False,
+        )
+
+        logger.info("Using bypass authentication", user_id=test_user.id)
+        return test_user
+
     except Exception as e:
         logger.error("Auth bypass failed", error=str(e), exc_info=True)
         return None
@@ -96,8 +118,8 @@ def get_current_user_with_bypass(
     This function tries normal authentication first, then falls back to bypass
     if enabled and no valid credentials are provided.
     """
-    # If bypass is enabled and we have a bypass user, use it
-    if bypass_user and settings.debug:
+    # If we have a bypass user, use it (bypass_enabled check is already done in get_auth_bypass_user)
+    if bypass_user:
         logger.info("Using bypass authentication", user_id=bypass_user.id)
         return bypass_user
 

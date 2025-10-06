@@ -8,8 +8,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from src.core.auth_bypass import get_current_active_user_with_bypass
 from src.core.database import get_db
-from src.core.dependencies import get_current_active_user
 from src.core.logging_config import get_logger
 from src.models.user.user import User
 from src.services.expense.expense_service import ExpenseService
@@ -24,7 +24,7 @@ def get_expense_stats(
     start_date: Optional[date] = Query(None, description="Start date for statistics"),
     end_date: Optional[date] = Query(None, description="End date for statistics"),
     currency: Optional[str] = Query(None, description="Currency filter"),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get expense statistics for the user."""
@@ -47,7 +47,7 @@ def get_category_stats(
     start_date: Optional[date] = Query(None, description="Start date for statistics"),
     end_date: Optional[date] = Query(None, description="End date for statistics"),
     limit: int = Query(10, ge=1, le=50, description="Number of categories to return"),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get expense statistics by category."""
@@ -69,7 +69,7 @@ def get_category_stats(
 def get_monthly_analytics(
     year: int,
     month: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_active_user_with_bypass),
     db: Session = Depends(get_db),
 ):
     """Get monthly analytics for a specific month."""
