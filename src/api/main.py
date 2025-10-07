@@ -10,7 +10,7 @@ from src.api.authentication.auth import router as auth_router
 from src.api.category.categories import router as categories_router
 from src.api.expense.expenses import router as expenses_router
 from src.api.user.analytics import router as analytics_router
-from src.core.config import settings
+from src.core.config import get_settings
 from src.core.logging_config import get_logger, setup_logging
 
 # Initialize logging system FIRST
@@ -21,18 +21,18 @@ logger = get_logger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title=settings.app_name,
-    version=settings.version,
+    title=get_settings().app_name,
+    version=get_settings().version,
     description="A comprehensive expense tracking API with authentication, categories, and analytics",
-    openapi_url=f"{settings.api_v1_str}/openapi.json",
-    docs_url=f"{settings.api_v1_str}/docs",
-    redoc_url=f"{settings.api_v1_str}/redoc",
+    openapi_url=f"{get_settings().api_v1_str}/openapi.json",
+    docs_url=f"{get_settings().api_v1_str}/docs",
+    redoc_url=f"{get_settings().api_v1_str}/redoc",
 )
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.backend_cors_origins,
+    allow_origins=get_settings().backend_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,16 +40,20 @@ app.add_middleware(
 
 # Include routers
 app.include_router(
-    auth_router, prefix=f"{settings.api_v1_str}/auth", tags=["authentication"]
+    auth_router, prefix=f"{get_settings().api_v1_str}/auth", tags=["authentication"]
 )
 app.include_router(
-    categories_router, prefix=f"{settings.api_v1_str}/categories", tags=["categories"]
+    categories_router,
+    prefix=f"{get_settings().api_v1_str}/categories",
+    tags=["categories"],
 )
 app.include_router(
-    expenses_router, prefix=f"{settings.api_v1_str}/expenses", tags=["expenses"]
+    expenses_router, prefix=f"{get_settings().api_v1_str}/expenses", tags=["expenses"]
 )
 app.include_router(
-    analytics_router, prefix=f"{settings.api_v1_str}/analytics", tags=["analytics"]
+    analytics_router,
+    prefix=f"{get_settings().api_v1_str}/analytics",
+    tags=["analytics"],
 )
 
 
@@ -143,7 +147,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 async def startup_event():
     """Application startup event."""
     logger.info("Starting up Expense Tracker API")
-    logger.info(f"DEBUG setting: {settings.debug}")
+    logger.info(f"DEBUG setting: {get_settings().debug}")
     logger.info(f"Environment DEBUG: {os.getenv('DEBUG')}")
 
 

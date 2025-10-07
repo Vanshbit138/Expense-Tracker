@@ -415,14 +415,14 @@ class TestAsyncDatabase:
         from sqlalchemy.ext.asyncio import AsyncSession
         from sqlalchemy.orm import declarative_base
 
-        from src.core.config import settings
+        from src.core.config import get_settings
         from src.core.logging_config import get_logger
 
         # Verify all imports are accessible
         assert AsyncGenerator is not None
         assert AsyncSession is not None
         assert declarative_base is not None
-        assert settings is not None
+        assert get_settings is not None
         assert get_logger is not None
 
     def test_database_url_transformation(self):

@@ -2,6 +2,7 @@
 Application configuration using Pydantic settings.
 """
 
+import os
 from typing import List, Union
 
 from pydantic import ConfigDict, field_validator
@@ -58,6 +59,10 @@ class Settings(BaseSettings):
     @classmethod
     def validate_database_url(cls, v: str) -> str:
         """Validate database URL is properly configured."""
+        # Skip validation for test environments
+        if os.getenv("TESTING") == "true":
+            return v or "sqlite:///:memory:"
+
         if not v:
             raise ValueError(
                 f"{cls.__name__}.database_url must be set in .env file. "
@@ -73,6 +78,10 @@ class Settings(BaseSettings):
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key is properly configured."""
+        # Skip validation for test environments
+        if os.getenv("TESTING") == "true":
+            return v or "test-secret-key-for-testing-only-32-chars"
+
         if not v:
             raise ValueError(
                 f"{cls.__name__}.secret_key must be set in .env file. "
@@ -89,5 +98,27 @@ class Settings(BaseSettings):
         return v
 
 
-# Global settings instance
-settings = Settings()
+# Global settings instance - lazy loading
+_settings = None
+
+
+def get_settings() -> Settings:
+    """Get settings instance with lazy loading."""
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
+
+
+# For backward compatibility - this will be set when first accessed
+settings = None
+
+
+def __getattr__(name):
+    """Lazy loading for settings."""
+    if name == "settings":
+        global settings
+        if settings is None:
+            settings = get_settings()
+        return settings
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

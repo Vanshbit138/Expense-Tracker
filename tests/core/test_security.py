@@ -5,7 +5,7 @@ Tests for the security module.
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
-from src.core.config import settings
+from src.core.config import get_settings
 from src.core.security import (
     create_access_token,
     get_password_hash,
@@ -41,6 +41,7 @@ class TestSecurity:
                 assert "exp" in payload
 
                 # Check the key and algorithm
+                settings = get_settings()
                 assert call_args[0][1] == settings.secret_key
                 # Check if algorithm is passed as keyword argument
                 if len(call_args[0]) > 2:
@@ -74,6 +75,7 @@ class TestSecurity:
                 assert "exp" in payload
 
                 # Check the key and algorithm
+                settings = get_settings()
                 assert call_args[0][1] == settings.secret_key
                 # Check if algorithm is passed as keyword argument
                 if len(call_args[0]) > 2:

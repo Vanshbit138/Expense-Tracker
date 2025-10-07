@@ -11,7 +11,7 @@ from typing import Any, Dict
 import structlog
 from pythonjsonlogger import jsonlogger
 
-from src.core.config import settings
+from src.core.config import get_settings
 
 
 class CustomJSONFormatter(jsonlogger.JsonFormatter):
@@ -59,9 +59,9 @@ def setup_logging(log_level: str = None, enable_json: bool = None) -> None:
 
     # Use settings if not provided
     if log_level is None:
-        log_level = settings.log_level
+        log_level = get_settings().log_level
     if enable_json is None:
-        enable_json = settings.enable_json_logging
+        enable_json = get_settings().enable_json_logging
 
     # Validate log level
     valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -126,9 +126,10 @@ def setup_logging(log_level: str = None, enable_json: bool = None) -> None:
     # Create file handler for persistent logs with dynamic level
     try:
         # Ensure logs directory exists
-        os.makedirs(os.path.dirname(settings.log_file), exist_ok=True)
+        log_file = get_settings().log_file
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-        file_handler = logging.FileHandler(settings.log_file)
+        file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(getattr(logging, log_level))
 
         if enable_json:
@@ -172,7 +173,7 @@ def setup_logging(log_level: str = None, enable_json: bool = None) -> None:
         "Logging system initialized",
         log_level=log_level,
         json_logging=enable_json,
-        log_file=settings.log_file,
+        log_file=get_settings().log_file,
     )
 
 

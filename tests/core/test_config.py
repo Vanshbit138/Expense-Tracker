@@ -17,7 +17,7 @@ class TestSettings:
     def test_default_values(self):
         """Test that default values are set correctly."""
         # Clear environment variables that might affect the test
-        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {"TESTING": "true"}, clear=True):
             settings = Settings()
             assert settings.app_name == "Expense Tracker API"
             # Note: debug might be True due to environment, so we check it's a boolean
@@ -74,7 +74,8 @@ class TestSettings:
         with patch.dict(
             os.environ,
             {
-                "DATABASE_URL": "postgresql://username:password@localhost:5432/expense_tracker"
+                "DATABASE_URL": "postgresql://username:password@localhost:5432/expense_tracker",
+                "TESTING": "false",  # Ensure validation is not bypassed
             },
         ):
             with pytest.raises(ValidationError) as exc_info:
@@ -104,6 +105,7 @@ class TestSettings:
             {
                 "DATABASE_URL": "postgresql://realuser:realpass@localhost:5432/expense_tracker",
                 "SECRET_KEY": "short",
+                "TESTING": "false",  # Ensure validation is not bypassed
             },
         ):
             with pytest.raises(ValidationError) as exc_info:
@@ -118,6 +120,7 @@ class TestSettings:
             {
                 "DATABASE_URL": "postgresql://realuser:realpass@localhost:5432/expense_tracker",
                 "SECRET_KEY": "your-secret-key-here-change-in-production",
+                "TESTING": "false",  # Ensure validation is not bypassed
             },
         ):
             with pytest.raises(ValidationError) as exc_info:

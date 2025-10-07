@@ -8,13 +8,14 @@ from typing import Any, Union
 import bcrypt
 from jose import jwt
 
-from src.core.config import settings
+from src.core.config import get_settings
 
 
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
 ) -> str:
     """Create JWT access token."""
+    settings = get_settings()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -71,6 +72,7 @@ def get_password_hash(password: str) -> str:
 
 def verify_token(token: str) -> Union[str, None]:
     """Verify JWT token and return subject."""
+    settings = get_settings()
     try:
         payload = jwt.decode(
             token, settings.secret_key, algorithms=[settings.algorithm]

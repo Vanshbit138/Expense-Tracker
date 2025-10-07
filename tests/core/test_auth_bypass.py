@@ -89,11 +89,13 @@ class TestAuthBypass:
 class TestAuthBypassFunctions:
     """Test cases for auth bypass functions."""
 
-    @patch("src.core.auth_bypass.settings")
+    @patch("src.core.auth_bypass.get_settings")
     @patch("src.services.authentication.password_service.get_password_hash")
-    def test_get_auth_bypass_user_enabled(self, mock_hash, mock_settings):
+    def test_get_auth_bypass_user_enabled(self, mock_hash, mock_get_settings):
         """Test get_auth_bypass_user when bypass is enabled."""
+        mock_settings = MagicMock()
         mock_settings.debug = True
+        mock_get_settings.return_value = mock_settings
         mock_db = MagicMock()
         mock_hash.return_value = "hashed_password"
 
@@ -115,10 +117,12 @@ class TestAuthBypassFunctions:
         result = get_auth_bypass_user(mock_db, bypass_enabled=False)
         assert result is None
 
-    @patch("src.core.auth_bypass.settings")
-    def test_get_current_user_with_bypass_uses_bypass(self, mock_settings):
+    @patch("src.core.auth_bypass.get_settings")
+    def test_get_current_user_with_bypass_uses_bypass(self, mock_get_settings):
         """Test get_current_user_with_bypass uses bypass when available."""
+        mock_settings = MagicMock()
         mock_settings.debug = True
+        mock_get_settings.return_value = mock_settings
         mock_db = MagicMock()
 
         bypass_user = MagicMock()
@@ -134,13 +138,15 @@ class TestAuthBypassFunctions:
 
         assert result == bypass_user
 
-    @patch("src.core.auth_bypass.settings")
+    @patch("src.core.auth_bypass.get_settings")
     @patch("src.core.dependencies.get_current_user")
     def test_get_current_user_with_bypass_normal_auth(
-        self, mock_get_current_user, mock_settings
+        self, mock_get_current_user, mock_get_settings
     ):
         """Test get_current_user_with_bypass falls back to normal auth."""
+        mock_settings = MagicMock()
         mock_settings.debug = False
+        mock_get_settings.return_value = mock_settings
         mock_db = MagicMock()
 
         normal_user = MagicMock()

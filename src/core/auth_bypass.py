@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from src.core.config import settings
+from src.core.config import get_settings
 from src.core.database import get_db
 from src.core.logging_config import get_logger
 from src.models.user.user import User
@@ -67,13 +67,16 @@ class AuthBypass:
 
 
 def get_auth_bypass_user(
-    db: Session = Depends(get_db), bypass_enabled: bool = settings.debug
+    db: Session = Depends(get_db), bypass_enabled: bool = None
 ) -> Optional[User]:
     """
     Get bypass authentication user for testing/development.
 
     This should only be used in development/testing environments.
     """
+    if bypass_enabled is None:
+        bypass_enabled = get_settings().debug
+
     if not bypass_enabled:
         return None
 
