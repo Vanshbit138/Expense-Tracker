@@ -83,6 +83,14 @@ class Settings(BaseSettings):
             return v or "test-secret-key-for-testing-only-32-chars"
 
         if not v:
+            # Log critical security failure
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.critical(
+                "Security configuration failure - SECRET_KEY not set",
+                message="Application cannot start without proper security configuration",
+            )
             raise ValueError(
                 f"{cls.__name__}.secret_key must be set in .env file. "
                 "Generate a secure key for production use."

@@ -45,9 +45,7 @@ def create_expense(
         )
         return expense
     except HTTPException as e:
-        logger.warning(
-            "Expense creation failed", user_id=current_user.id, error=e.detail
-        )
+        logger.error("Expense creation failed", user_id=current_user.id, error=e.detail)
         raise
     except Exception as e:
         logger.error(

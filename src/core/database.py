@@ -17,10 +17,27 @@ def get_engine():
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_engine(
-            settings.database_url,
-            echo=settings.debug,
-        )
+        try:
+            _engine = create_engine(
+                settings.database_url,
+                echo=settings.debug,
+            )
+            # Test the connection
+            with _engine.connect() as conn:
+                from sqlalchemy import text
+
+                conn.execute(text("SELECT 1"))
+        except Exception as e:
+            from src.core.logging_config import get_logger
+
+            logger = get_logger(__name__)
+            logger.critical(
+                "Database connection failed - system cannot start",
+                database_url=settings.database_url,
+                error=str(e),
+                exc_info=True,
+            )
+            raise
     return _engine
 
 

@@ -5,6 +5,7 @@ Authentication bypass for testing and local development.
 from typing import Optional
 
 from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from src.core.config import get_settings
@@ -106,12 +107,18 @@ def get_auth_bypass_user(
         return test_user
 
     except Exception as e:
-        logger.error("Auth bypass failed", error=str(e), exc_info=True)
+        logger.critical(
+            "Authentication system failure - bypass mechanism failed",
+            error=str(e),
+            exc_info=True,
+        )
         return None
 
 
 def get_current_user_with_bypass(
-    credentials: Optional[str] = None,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+        HTTPBearer(auto_error=False)
+    ),
     db: Session = Depends(get_db),
     bypass_user: Optional[User] = Depends(get_auth_bypass_user),
 ) -> User:
@@ -121,15 +128,25 @@ def get_current_user_with_bypass(
     This function tries normal authentication first, then falls back to bypass
     if enabled and no valid credentials are provided.
     """
-    # If we have a bypass user, use it (bypass_enabled check is already done in get_auth_bypass_user)
+    # Try normal authentication first if credentials are provided
+    if credentials:
+        from src.core.dependencies import get_current_user
+
+        return get_current_user(credentials, db)
+
+    # If no credentials, try bypass (only if enabled)
     if bypass_user:
         logger.info("Using bypass authentication", user_id=bypass_user.id)
         return bypass_user
 
-    # Otherwise, use normal authentication
-    from src.core.dependencies import get_current_user
+    # If no credentials and no bypass, raise authentication error
+    from fastapi import HTTPException, status
 
-    return get_current_user(credentials, db)
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def get_current_active_user_with_bypass(

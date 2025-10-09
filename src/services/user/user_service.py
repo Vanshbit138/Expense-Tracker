@@ -194,7 +194,7 @@ class UserService:
         self.logger.debug("Authenticating user", email=auth_query.email)
         user = self.user_repo.get_by_email(auth_query.email)
         if not user:
-            self.logger.warning(
+            self.logger.error(
                 "Authentication failed - user not found", email=auth_query.email
             )
             raise HTTPException(
@@ -202,7 +202,7 @@ class UserService:
                 detail="Invalid email or password",
             )
         if not verify_password(auth_query.password, user.hashed_password):
-            self.logger.warning(
+            self.logger.error(
                 "Authentication failed - invalid password", email=auth_query.email
             )
             raise HTTPException(

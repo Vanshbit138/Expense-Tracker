@@ -146,9 +146,28 @@ async def general_exception_handler(request: Request, exc: Exception):
 @app.on_event("startup")
 async def startup_event():
     """Application startup event."""
-    logger.info("Starting up Expense Tracker API")
-    logger.info(f"DEBUG setting: {get_settings().debug}")
-    logger.info(f"Environment DEBUG: {os.getenv('DEBUG')}")
+    try:
+        logger.info("Starting up Expense Tracker API")
+        logger.info(f"DEBUG setting: {get_settings().debug}")
+        logger.info(f"Environment DEBUG: {os.getenv('DEBUG')}")
+
+        # Test critical system components
+        from sqlalchemy import text
+
+        from src.core.database import get_engine
+
+        engine = get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+
+        logger.info("Application startup completed successfully")
+    except Exception as e:
+        logger.critical(
+            "Application startup failed - system cannot start",
+            error=str(e),
+            exc_info=True,
+        )
+        raise
 
 
 @app.on_event("shutdown")

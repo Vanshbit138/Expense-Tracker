@@ -42,9 +42,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
             "updated_at": user.updated_at,
         }
     except HTTPException as e:
-        logger.warning(
-            "User registration failed", email=user_data.email, error=e.detail
-        )
+        logger.error("User registration failed", email=user_data.email, error=e.detail)
         raise
     except Exception as e:
         logger.error(
