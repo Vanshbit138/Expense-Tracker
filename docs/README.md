@@ -8,26 +8,35 @@ This documentation provides comprehensive coverage of the Expense Tracker API, f
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup
+### Option 1: Docker Deployment (Recommended)
+```bash
+# Clone repository
+git clone <repository-url>
+cd Expense-Tracker
+
+# Start with Docker Compose
+docker-compose up --build -d
+
+# Check health
+curl http://localhost:8000/health
+```
+
+### Option 2: Local Development
 ```bash
 # Copy environment template
 cp env.example .env
 
 # Edit .env with your configuration
 nano .env
-```
 
-### 2. Install Dependencies
-```bash
+# Install dependencies
 pip install -r requirements/requirements.txt
-```
 
-### 3. Start Server
-```bash
+# Start server
 python run_server.py
 ```
 
-### 4. Access Documentation
+### Access Documentation
 - **Swagger UI**: http://localhost:8000/api/v1/docs
 - **ReDoc**: http://localhost:8000/api/v1/redoc
 - **OpenAPI Spec**: http://localhost:8000/api/v1/openapi.json
@@ -42,6 +51,7 @@ python run_server.py
 ### 🔧 Configuration & Setup
 - **[Configuration Guide](configuration_guide.md)** - Detailed configuration instructions
 - **[Deployment Guide](deployment_guide.md)** - Production deployment instructions
+- **[Docker Documentation](docker/)** - Complete Docker deployment guide
 - **[Testing Guide](testing/testing_guide.md)** - Testing framework and examples
 
 ### 📡 API Reference
@@ -100,8 +110,10 @@ python run_server.py
 - **mypy** - Type checking
 
 ### Infrastructure
-- **Docker** - Containerization
-- **Nginx** - Reverse proxy
+- **Docker** - Containerization with multi-stage builds
+- **Docker Compose** - Multi-service orchestration
+- **PostgreSQL** - Containerized database
+- **Nginx** - Reverse proxy and load balancing
 - **systemd** - Service management
 - **Cron** - Scheduled tasks
 
@@ -115,6 +127,12 @@ docs/
 ├── 📄 configuration_guide.md       # Configuration instructions
 ├── 📄 deployment_guide.md          # Deployment instructions
 ├── 📄 changelog.md                 # Version history
+├── 📁 docker/                      # Docker documentation
+│   ├── README.md                   # Docker overview
+│   ├── docker_guide.md             # Complete Docker guide
+│   ├── troubleshooting.md          # Docker troubleshooting
+│   ├── production.md               # Production deployment
+│   └── commands.md                 # Docker commands reference
 ├── 📁 implementation/              # Implementation details
 │   ├── overview.md
 │   └── logging/
@@ -142,9 +160,10 @@ docs/
 4. Check the [Testing Guide](testing/testing_guide.md) for testing
 
 ### For DevOps
-1. Review the [Deployment Guide](deployment_guide.md) for production setup
-2. Check the [Configuration Guide](configuration_guide.md) for environment setup
-3. Use the [Architecture Guide](architecture.md) for infrastructure planning
+1. Review the [Docker Documentation](docker/) for containerized deployment
+2. Check the [Deployment Guide](deployment_guide.md) for production setup
+3. Use the [Configuration Guide](configuration_guide.md) for environment setup
+4. Follow the [Architecture Guide](architecture.md) for infrastructure planning
 
 ### For API Users
 1. Start with the [API Reference](api_reference.md) for endpoint documentation
