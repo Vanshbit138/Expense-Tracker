@@ -13,3 +13,4 @@ structlog>=23.2.0
 python-magic>=0.4.27
 python-json-logger>=2.0.7
 python-dotenv>=1.0.0
+email-validator>=2.0.0
