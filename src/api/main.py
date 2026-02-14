@@ -174,6 +174,7 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown event."""
     logger.info("Shutting down Expense Tracker API")
+    print("Application shutdown completed successfully")
 
 
 @app.get("/health")
